@@ -11,16 +11,7 @@ class RecapitulationService {
         $this->pdo = $pdo;
     }
 
-    /**
-     * Récupérer la récapitulation avec : ville, besoin, total_demande, total_distribue, reste, 
-     * montant_demande, montant_distribue, montant_reste
-     * 
-     * Calculs:
-     * - reste = total_demande - total_distribue
-     * - montant_demande = total_demande * pu
-     * - montant_distribue = total_distribue * pu
-     * - montant_reste = reste * pu
-     */
+    
     public function getRecapitulation(): array {
         $sql = "SELECT 
                     v.v_id AS ville_id,
@@ -30,11 +21,7 @@ class RecapitulationService {
                     ub.ub_libelle AS unite,
                     b.b_prixUnitraire AS prix_unitaire,
                     bv.bv_quantite AS total_demande,
-                    SUM(dd.dd_quantite) AS total_distribue,
-                    (bv.bv_quantite - SUM(dd.dd_quantite)) AS reste,
-                    (bv.bv_quantite * b.b_prixUnitraire) AS montant_demande,
-                    (SUM(dd.dd_quantite) * b.b_prixUnitraire) AS montant_distribue,
-                    ((bv.bv_quantite - SUM(dd.dd_quantite)) * b.b_prixUnitraire) AS montant_reste
+                    SUM(dd.dd_quantite) AS total_distribue
                 FROM bngrc_besoinVille bv
                 JOIN bngrc_ville v ON bv.bv_ville = v.v_id
                 JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
@@ -43,7 +30,8 @@ class RecapitulationService {
                 GROUP BY v.v_id, v.v_nom, b.b_id, b.b_libelle, ub.ub_libelle, b.b_prixUnitraire, bv.bv_quantite
                 ORDER BY v.v_nom, b.b_libelle";
         
-        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        return $this->calculerMontants($rows);
     }
 
     /**
@@ -58,11 +46,7 @@ class RecapitulationService {
                     ub.ub_libelle AS unite,
                     b.b_prixUnitraire AS prix_unitaire,
                     bv.bv_quantite AS total_demande,
-                    SUM(dd.dd_quantite) AS total_distribue,
-                    (bv.bv_quantite - SUM(dd.dd_quantite)) AS reste,
-                    (bv.bv_quantite * b.b_prixUnitraire) AS montant_demande,
-                    (SUM(dd.dd_quantite) * b.b_prixUnitraire) AS montant_distribue,
-                    ((bv.bv_quantite - SUM(dd.dd_quantite)) * b.b_prixUnitraire) AS montant_reste
+                    SUM(dd.dd_quantite) AS total_distribue
                 FROM bngrc_besoinVille bv
                 JOIN bngrc_ville v ON bv.bv_ville = v.v_id
                 JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
@@ -74,6 +58,27 @@ class RecapitulationService {
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$villeId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->calculerMontants($rows);
+    }
+
+    
+    private function calculerMontants(array $rows): array {
+        $result = [];
+        foreach ($rows as $row) {
+            $totalDemande = (int)$row['total_demande'];
+            $totalDistribue = (int)($row['total_distribue'] ?? 0);
+            $pu = (float)$row['prix_unitaire'];
+            $reste = $totalDemande - $totalDistribue;
+
+            $row['total_distribue'] = $totalDistribue;
+            $row['reste'] = $reste;
+            $row['montant_demande'] = $totalDemande * $pu;
+            $row['montant_distribue'] = $totalDistribue * $pu;
+            $row['montant_reste'] = $reste * $pu;
+
+            $result[] = $row;
+        }
+        return $result;
     }
 }
