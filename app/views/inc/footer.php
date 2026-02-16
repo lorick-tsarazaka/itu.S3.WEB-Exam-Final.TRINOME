@@ -24,6 +24,7 @@
                             <?php $base = defined('BASE_URL') ? BASE_URL : ''; ?>
                             <li><a href="<?= $base ?>/"><i class="bi bi-chevron-right me-1"></i>Tableau de bord</a></li>
                             <li><a href="<?= $base ?>/collecte"><i class="bi bi-chevron-right me-1"></i>Collectes</a></li>
+                            <li><a href="<?= $base ?>/achats"><i class="bi bi-chevron-right me-1"></i>Achats</a></li>
                             <li><a href="<?= $base ?>/besoins"><i class="bi bi-chevron-right me-1"></i>Besoins</a></li>
                         </ul>
                     </div>

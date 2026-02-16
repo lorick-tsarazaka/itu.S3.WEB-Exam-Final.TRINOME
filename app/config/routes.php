@@ -7,6 +7,7 @@ use app\controllers\BesoinController;
 use app\controllers\CollecteController;
 use app\controllers\SimulationController;
 use app\controllers\RecapitulationController;
+use app\controllers\AchatsController;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
 use flight\net\Router;
@@ -88,6 +89,17 @@ $router->group('', function(Router $router) use ($app) {
     $router->post('/simulation/valider', function() use ($app) {
         $controller = new SimulationController($app);
         $controller->valider();
+    });
+
+    // Achats - couverture achats
+    $router->get('/achats', function() use ($app) {
+        $controller = new AchatsController($app);
+        $controller->index();
+    });
+
+    $router->post('/achats/recouvrir', function() use ($app) {
+        $controller = new AchatsController($app);
+        $controller->recouvrir();
     });
 
     // Récapitulation
