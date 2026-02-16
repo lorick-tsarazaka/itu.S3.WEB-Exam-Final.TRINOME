@@ -39,7 +39,7 @@
                         </div>
                     </div>
                     <div class="stat-card-footer">
-                        <a href="/villes" class="stat-link">
+                        <a href="<?= $base ?>/villes" class="stat-link">
                             Voir détails <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -57,7 +57,7 @@
                         </div>
                     </div>
                     <div class="stat-card-footer">
-                        <a href="/dons" class="stat-link">
+                        <a href="<?= $base ?>/dons" class="stat-link">
                             Voir détails <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -75,7 +75,7 @@
                         </div>
                     </div>
                     <div class="stat-card-footer">
-                        <a href="/besoins" class="stat-link">
+                        <a href="<?= $base ?>/besoins" class="stat-link">
                             Voir détails <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -111,7 +111,7 @@
                             </h5>
                             <small class="text-muted">Liste des villes sinistrées avec leurs besoins</small>
                         </div>
-                        <a href="/villes/nouveau" class="btn btn-primary btn-sm">
+                        <a href="<?= $base ?>/villes/nouveau" class="btn btn-primary btn-sm">
                             <i class="bi bi-plus-lg me-1"></i>Ajouter
                         </a>
                     </div>
@@ -320,7 +320,7 @@
                         </div>
                     </div>
                     <div class="card-footer text-center">
-                        <a href="/dons" class="btn btn-outline-primary btn-sm w-100">
+                        <a href="<?= $base ?>/dons" class="btn btn-outline-primary btn-sm w-100">
                             <i class="bi bi-list me-1"></i>Voir tous les dons
                         </a>
                     </div>
