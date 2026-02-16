@@ -113,6 +113,22 @@ class BesoinRepository {
     }
 
     /**
+     * Récupérer la quantité totale demandée d'un besoin dans une ville
+     */
+    public function getQuantiteDemandeeParBesoinVille(int $villeId, int $besoinId): int {
+        $sql = "SELECT 
+                    bv.bv_quantite AS quantite_demandee
+                FROM bngrc_besoinVille bv
+                WHERE bv.bv_ville = ? AND bv.bv_besoin = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$villeId, $besoinId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result ? (int)$result['quantite_demandee'] : 0;
+    }
+
+    /**
      * Insert a single besoin
      */
     public function insertBesoinVille(int $besoinId, int $villeId, int $quantite)

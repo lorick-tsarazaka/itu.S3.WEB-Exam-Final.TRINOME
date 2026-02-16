@@ -28,17 +28,102 @@ class SimulationDonService {
     }
 
     /**
-     * Simuler le dispatch de dons
-     * Pour chaque ville :
-     *   Pour chaque besoin (de la ville) :
-     *     Calculer reste à distribuer (besoin_total - déjà_distribué)
-     *     Parcourir collectes (date ASC et id ASC)
-     *       Prendre stock disponible (quantite_collecte - déjà_distribué)
-     *       Insérer distribution
-     *       Diminuer reste
-     * 
-     * @param string|null $date Date de la distribution (par défaut aujourd'hui)
-     * @return array Résultat de la simulation avec les distributions effectuées
+     * Simuler le dispatch SANS enregistrer en base
+     * Retourne un aperçu des distributions qui seraient effectuées
+     */
+    public function simulerSansEnregistrer(): array {
+        $resultat = [
+            'date' => date('Y-m-d'),
+            'distributions' => [],
+            'total_distribue' => 0,
+            'villes_traitees' => 0,
+            'besoins_satisfaits' => 0,
+            'success' => true
+        ];
+
+        $villes = $this->villeRepo->findAll();
+        $stockParBesoin = $this->calculerStockDisponible();
+
+        foreach ($villes as $ville) {
+            $villeId = (int)$ville['v_id'];
+            $villeNom = $ville['v_nom'];
+
+            $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVille($villeId);
+
+            foreach ($besoinsNonSatisfaits as $besoin) {
+                $besoinId = (int)$besoin['besoin_id'];
+                $quantiteDemandee = (int)$besoin['quantite_demandee'];
+                $quantiteDistribuee = (int)$besoin['quantite_distribuee'];
+                $resteADistribuer = $quantiteDemandee - $quantiteDistribuee;
+
+                if ($resteADistribuer <= 0) continue;
+
+                $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
+                if ($stockDisponible <= 0) continue;
+
+                $quantiteADistribuer = min($resteADistribuer, $stockDisponible);
+
+                if ($quantiteADistribuer > 0) {
+                    $stockParBesoin[$besoinId] -= $quantiteADistribuer;
+
+                    $resultat['distributions'][] = [
+                        'ville_id' => $villeId,
+                        'ville_nom' => $villeNom,
+                        'besoin_id' => $besoinId,
+                        'besoin_libelle' => $besoin['besoin_libelle'],
+                        'unite' => $besoin['unite'],
+                        'quantite_demandee' => $quantiteDemandee,
+                        'deja_distribue' => $quantiteDistribuee,
+                        'quantite_distribuee' => $quantiteADistribuer,
+                        'reste_apres' => $resteADistribuer - $quantiteADistribuer
+                    ];
+
+                    $resultat['total_distribue'] += $quantiteADistribuer;
+                    if ($resteADistribuer - $quantiteADistribuer == 0) {
+                        $resultat['besoins_satisfaits']++;
+                    }
+                }
+            }
+            $resultat['villes_traitees']++;
+        }
+
+        return $resultat;
+    }
+
+    /**
+     * Grouper les résultats de simulation par ville pour l'affichage
+     */
+    public function grouperSimulationParVille(array $simulationResult): array {
+        $parVille = [];
+        foreach ($simulationResult['distributions'] as $dist) {
+            $villeId = $dist['ville_id'];
+            if (!isset($parVille[$villeId])) {
+                $parVille[$villeId] = [
+                    'ville_id' => $villeId,
+                    'ville_nom' => $dist['ville_nom'],
+                    'besoins' => [],
+                    'total_demande' => 0,
+                    'total_distribue' => 0,
+                    'total_reste' => 0
+                ];
+            }
+            $parVille[$villeId]['besoins'][] = [
+                'besoin_id' => $dist['besoin_id'],
+                'besoin_libelle' => $dist['besoin_libelle'],
+                'unite' => $dist['unite'],
+                'quantite_demandee' => $dist['quantite_demandee'],
+                'quantite_distribuee' => $dist['quantite_distribuee'],
+                'reste' => $dist['reste_apres']
+            ];
+            $parVille[$villeId]['total_demande'] += $dist['quantite_demandee'];
+            $parVille[$villeId]['total_distribue'] += $dist['quantite_distribuee'];
+            $parVille[$villeId]['total_reste'] += $dist['reste_apres'];
+        }
+        return array_values($parVille);
+    }
+
+    /**
+     * Simuler le dispatch de dons et ENREGISTRER en base (appelé après validation)
      */
     public function simulerDispatch(?string $date = null): array {
         $date = $date ?? date('Y-m-d');

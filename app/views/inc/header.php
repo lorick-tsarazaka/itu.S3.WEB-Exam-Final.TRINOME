@@ -43,6 +43,11 @@
                             <i class="bi bi-arrow-repeat me-1"></i> Simulation
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Récapitulation' ? 'active' : '' ?>" href="<?= $base ?>/recapitulation">
+                            <i class="bi bi-graph-up me-1"></i> Récapitulation
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
