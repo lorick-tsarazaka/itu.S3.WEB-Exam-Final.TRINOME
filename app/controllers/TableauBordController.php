@@ -14,19 +14,18 @@ class TableauBordController {
     //  get page TableauBord
     public static function showTableauBord() {
         $pdo  = Flight::db();
+
         $villeRepo = new VilleRepository($pdo);
         $besoinRepo = new BesoinRepository($pdo);
         $distributionRepo = new DistributionRepository($pdo);
+
         $svc  = new TableauBordService($villeRepo, $besoinRepo, $distributionRepo);
 
-        // get all besoin in one ville
-        $allBesoin = $svc->findByBesoinVille();
-        $allDistribution = $svc->findByDistributionVille();
+        $data = $svc->getTableauBordData();
 
         Flight::render('TableauBord', [
             'csp_nonce' => Flight::get('csp_nonce'),
-            'besoins' => $allBesoin,
-            'allDistribution' => $allDistribution
+            'data' => $data
         ]);
     }
 }

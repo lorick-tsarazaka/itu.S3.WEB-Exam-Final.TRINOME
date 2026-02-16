@@ -6,7 +6,7 @@ use app\repositories\VilleRepository;
 use app\repositories\BesoinRepository;
 use app\repositories\DistributionRepository;
 
-class EchangerService {
+class TableauBordService {
     private VilleRepository $villeRepo;
     private BesoinRepository $besoinRepo;
     private DistributionRepository $distributionRepo;
@@ -19,11 +19,11 @@ class EchangerService {
 
     // function pour recuperer toutes les besoins d'une ville
     public function findByBesoinVille() {
-        $villes = $villeRepo->findAll();
+        $villes = $this->$villeRepo->findAll();
         $besoins = [];
 
         for ($i = 0; $i < count($villes); $i++) {
-            $besoins = $besoinRepo->findByVille($villes['v_id']);
+            $besoins = $this->$besoinRepo->findByVille($villes['v_id']);
         }
 
         return $besoins;
@@ -31,13 +31,34 @@ class EchangerService {
 
     //  function pour recuperer toutes les distributions d'une ville
     public function findByDistributionVille() {
-        $villes = $villeRepo->findAll();
+        $villes = $this->$villeRepo->findAll();
         $distribution = [];
 
         for ($i = 0; $i < count($villes); $i++) {
-            $distribution = $distributionRepo->findByVille($villes['v_id']);
+            $distribution = $this->$distributionRepo->findByVille($villes['v_id']);
         }
 
         return $distribution;
+    }
+
+    //  function to get all assembled (besoins + distributions)
+    public function getTableauBordData() {
+
+        $villes = $this->villeRepo->findAll();
+        $result = [];
+
+        foreach ($villes as $ville) {
+
+            $besoins = $this->besoinRepo->findByVille($ville['v_id']);
+            $distributions = $this->distributionRepo->findByVille($ville['v_id']);
+
+            $result[] = [
+                'ville' => $ville,
+                'besoins' => $besoins,
+                'distributions' => $distributions
+            ];
+        }
+
+        return $result;
     }
 }
