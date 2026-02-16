@@ -45,7 +45,7 @@
 
     <div class="container">
         <!-- Stats Cards -->
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-5 align-items-stretch">
             <div class="col-md-6 col-xl-3">
                 <div class="stat-card stat-card-primary">
                     <div class="stat-card-body">

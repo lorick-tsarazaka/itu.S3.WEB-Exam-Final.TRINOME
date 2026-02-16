@@ -4,6 +4,7 @@ use app\controllers\MainController;
 use app\controllers\TableauBordController;
 use app\controllers\DistributionController;
 use app\controllers\BesoinController;
+use app\controllers\CollecteController;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
 use flight\net\Router;
@@ -46,4 +47,29 @@ $router->group('', function(Router $router) use ($app) {
         $controller = new BesoinController($app);
         $controller->save();
     });
+
+    // Collecte : liste
+    $router->get('/collecte', function() use ($app) {
+        $controller = new CollecteController($app);
+        $controller->listCollectes();
+    });
+
+    // Collecte : formulaire ajout
+    $router->get('/collecte/add', function() use ($app) {
+        $controller = new CollecteController($app);
+        $controller->addCollecte();
+    });
+
+    // Collecte : enregistrement
+    $router->post('/collecte/add', function() use ($app) {
+        $controller = new CollecteController($app);
+        $controller->enregistrerCollecte();
+    });
+
+    // Collecte : détails (API JSON)
+    $router->get('/collecte/details/@id', function($id) use ($app) {
+        $controller = new CollecteController($app);
+        $controller->getDetails((int) $id);
+    });
+
 }, [ SecurityHeadersMiddleware::class ]);

@@ -261,6 +261,9 @@ body {
     overflow: hidden;
     transition: all var(--transition-normal);
     border: 1px solid var(--gray-100);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .stat-card:hover {
@@ -273,6 +276,7 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex: 1;
 }
 
 .stat-icon {
@@ -309,13 +313,16 @@ body {
 .stat-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .stat-number {
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--gray-900);
-    margin: 0;
+    margin: 0 0 0.25rem 0;
     line-height: 1.2;
 }
 
