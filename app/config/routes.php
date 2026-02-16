@@ -23,6 +23,7 @@ $router->group('', function(Router $router) use ($app) {
     $router->post('/distribution/saisie', function() use ($app) {
         $controller = new DistributionController($app);
         $controller->enregistrerDistribution();
+    });
     // Besoins: saisie + enregistrement
     $router->get('/besoins', function() use ($app) {
         $controller = new BesoinController($app);
