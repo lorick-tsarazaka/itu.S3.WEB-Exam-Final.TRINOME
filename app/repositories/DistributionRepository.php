@@ -38,8 +38,8 @@ class DistributionRepository {
 
         $st->execute([(int)$id_ville]);
         return $st->fetchAll(PDO::FETCH_ASSOC);
-
     }
+
     public function insererDistribution(string $date, array $details): int {
         try {
             $this->pdo->beginTransaction();
