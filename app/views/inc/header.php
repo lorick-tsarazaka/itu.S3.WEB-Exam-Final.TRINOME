@@ -24,6 +24,11 @@
                             <i class="bi bi-speedometer2 me-1"></i> Tableau de bord
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Saisie Distribution' ? 'active' : '' ?>" href="/distribution/saisie">
+                            <i class="bi bi-truck me-1"></i> Saisie Distribution
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
