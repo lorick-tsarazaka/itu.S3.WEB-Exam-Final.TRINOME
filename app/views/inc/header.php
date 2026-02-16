@@ -34,6 +34,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Achats' ? 'active' : '' ?>" href="<?= $base ?>/achats">
+                            <i class="bi bi-cart3 me-1"></i> Achats
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link px-3 <?= ($page_title ?? '') === 'Saisie Besoins' ? 'active' : '' ?>" href="<?= $base ?>/besoins">
                             <i class="bi bi-list-check me-1"></i> Besoins
                         </a>
