@@ -21,7 +21,9 @@
                     <div class="col-lg-4 mb-4 mb-lg-0">
                         <h6 class="text-white mb-3">Liens rapides</h6>
                         <ul class="list-unstyled footer-links">
-                            <li><a href="/"><i class="bi bi-chevron-right me-1"></i>Tableau de bord</a></li>
+                            <?php $base = defined('BASE_URL') ? BASE_URL : ''; ?>
+                            <li><a href="<?= $base ?>/"><i class="bi bi-chevron-right me-1"></i>Tableau de bord</a></li>
+                            <li><a href="<?= $base ?>/besoins"><i class="bi bi-chevron-right me-1"></i>Besoins</a></li>
                         </ul>
                     </div>
                     <div class="col-lg-4">
@@ -43,6 +45,6 @@
         </div>
     </footer>
 
-    <script src="/assets/js/main.js" nonce="<?= htmlspecialchars($csp_nonce ?? '') ?>"></script>
+    <script src="<?= $base ?>/assets/js/main.js" nonce="<?= htmlspecialchars($csp_nonce ?? '') ?>"></script>
 </body>
 </html>
