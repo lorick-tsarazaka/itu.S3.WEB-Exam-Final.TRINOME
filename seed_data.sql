@@ -115,8 +115,8 @@ INSERT INTO bngrc_distribution (d_id, d_date) VALUES
 (1, '2025-02-15'),
 (2, '2025-02-20');
 
--- Détails des distributions (dd_don references collecte id)
-INSERT INTO bngrc_distributionDetails (dd_id, dd_don, dd_besoin, dd_quantite, dd_ville) VALUES
+-- Détails des distributions (dd_distri references distribution id)
+INSERT INTO bngrc_distributionDetails (dd_id, dd_distribution, dd_besoin, dd_quantite, dd_ville) VALUES
 (1, 1, 1, 800, 4), -- distrib 800 L eau to Toamasina from collecte 1
 (2, 1, 2, 300, 1),
 (3, 2, 4, 40, 4),
