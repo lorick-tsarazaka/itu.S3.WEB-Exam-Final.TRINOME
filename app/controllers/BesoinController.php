@@ -5,17 +5,16 @@ namespace app\controllers;
 use flight\Engine;
 use Flight;
 use app\repositories\BesoinRepository;
-use app\repositories\BesoinRepositorySec;
 
 class BesoinController
 {
     protected Engine $app;
-    protected BesoinRepositorySec $repo;
+    protected BesoinRepository $repo;
 
-    public function __construct($app)
-    {
-        $this->app = $app;
-        $this->repo = new BesoinRepositorySec($app);
+    public function __construct(Engine $app) {
+         $this->app = $app;
+         $pdo = Flight::db();
+         $this->repo = new BesoinRepository($pdo);
     }
 
     // Affiche le formulaire de saisie des besoins

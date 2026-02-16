@@ -30,4 +30,53 @@ class BesoinRepository {
         $st->execute([(int)$id_ville]);
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Insert a single besoin
+     */
+    public function insertBesoinVille(int $besoinId, int $villeId, int $quantite)
+    {
+        $db = $this->pdo;
+        try {
+            $stmt = $db->runQuery(
+                'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville) VALUES (?, ?, ?)',
+                [ $besoinId, $quantite, $villeId ]
+            );
+            return (int)$db->lastInsertId();
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Insert multiple besoins 
+     */
+    public function insertMultipleForVille(int $villeId, array $besoins)
+    {
+        $db = $this->pdo;
+        $inserted = [];
+        try {
+            $db->beginTransaction();
+            foreach ($besoins as $b) {
+                $besoinId = (int)($b['besoin'] ?? 0);
+                $quantite = (int)($b['quantite'] ?? 0);
+                if ($besoinId <= 0) {
+                    continue;
+                }
+                $db->runQuery(
+                    'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville) VALUES (?, ?, ?)',
+                    [ $besoinId, $quantite, $villeId ]
+                );
+                $inserted[] = (int)$db->lastInsertId();
+            }
+            $db->commit();
+            return $inserted;
+        } catch (PDOException $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            return false;
+        }
+    }
+
 }
