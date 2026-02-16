@@ -28,7 +28,7 @@ class DistributionRepository {
 
             foreach ($details as $detail) {
                 $stmtDetails->execute([
-                    ':dd_don'      => $detail['dd_don'],
+                    ':dd_don'      => $distributionId,
                     ':dd_besoin'   => $detail['dd_besoin'],
                     ':dd_quantite' => $detail['dd_quantite'],
                     ':dd_ville'    => $detail['dd_ville']
