@@ -61,21 +61,26 @@ INSERT INTO bngrc_uniteBesoin (ub_id, ub_libelle) VALUES
 (2, 'litre'),
 (3, 'kg'),
 (4, 'pack'),
-(5, 'colis');
+(5, 'colis'),
+(6, 'MGA'),
+(7, 'EUR'),
+(8, 'USD');
 
 -- Besoins (explicit ids to reference later)
 INSERT INTO bngrc_besoin (b_id, b_libelle, b_prixUnitraire, b_categorie, b_unite) VALUES
-(1 , 'Argent liquide', 1.00, 1, 1),
-(2, 'Eau potable', 0.50, 3, 2),
-(3, 'Riz', 0.90, 2, 3),
-(4, 'Conserves alimentaires', 2.50, 2, 3),
-(5, 'Bâches / Tarpulin', 12.00, 4, 1),
-(6, 'Couvertures', 8.00, 3, 1),
-(7, 'Kits hygiène', 5.00, 5, 4),
-(8, 'Trousse médicale', 15.00, 6, 4),
-(9, 'Lait infantile', 6.00, 2, 3),
-(10,'Filets anti-moustiques', 7.50, 3, 1),
-(11,'Vêtements', 4.00, 7, 1);
+(1 , 'Ariary Malgache', 1.00, 1, 6),
+(2 , 'Euro', 1.00, 1, 7),
+(3 , 'Dollar US', 1.00, 1, 8),
+(4, 'Eau potable', 0.50, 3, 2),
+(5, 'Riz', 0.90, 2, 3),
+(6, 'Conserves alimentaires', 2.50, 2, 3),
+(7, 'Bâches / Tarpulin', 12.00, 4, 1),
+(8, 'Couvertures', 8.00, 3, 1),
+(9, 'Kits hygiène', 5.00, 5, 4),
+(10, 'Trousse médicale', 15.00, 6, 4),
+(11, 'Lait infantile', 6.00, 2, 3),
+(12,'Filets anti-moustiques', 7.50, 3, 1),
+(13,'Vêtements', 4.00, 7, 1);
 
 -- Status values for besoinVille
 INSERT INTO bngrc_statusBesoinVille (sbv_id, sbv_libelle) VALUES
