@@ -1,6 +1,7 @@
 <?php
 
 use app\controllers\MainController;
+use app\controllers\DistributionController;
 use app\controllers\BesoinController;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
@@ -13,6 +14,15 @@ $router->group('', function(Router $router) use ($app) {
         $controller->home();
     });
 
+    // Saisie Distribution
+    $router->get('/distribution/saisie', function() use ($app) {
+        $controller = new DistributionController($app);
+        $controller->saisieDistribution();
+    });
+
+    $router->post('/distribution/saisie', function() use ($app) {
+        $controller = new DistributionController($app);
+        $controller->enregistrerDistribution();
     // Besoins: saisie + enregistrement
     $router->get('/besoins', function() use ($app) {
         $controller = new BesoinController($app);
