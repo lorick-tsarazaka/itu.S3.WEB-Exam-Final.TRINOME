@@ -45,3 +45,5 @@
 
     <!-- Spacer pour le fixed navbar -->
     <div class="navbar-spacer"></div>
+
+    <!-- Breadcrumb moved into each page's hero section to keep it inside the hero -->
