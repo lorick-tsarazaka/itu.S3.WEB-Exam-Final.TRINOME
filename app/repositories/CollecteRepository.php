@@ -48,6 +48,74 @@ class CollecteRepository {
     }
 
     /**
+     * Récupérer les collectes disponibles par besoin, ordonnées par date et id (FIFO)
+     * Stock disponible = quantite_collecte - déjà_distribué
+     */
+    public function getCollectesDisponiblesParBesoin(int $besoinId): array {
+        $sql = "SELECT 
+                    cd.cd_id,
+                    cd.cd_collecte,
+                    cd.cd_besoin,
+                    cd.cd_quantite AS quantite_collectee,
+                    c.c_date,
+                    b.b_libelle AS besoin_libelle,
+                    COALESCE(
+                        (SELECT SUM(dd.dd_quantite) 
+                         FROM bngrc_distributionDetails dd 
+                         WHERE dd.dd_besoin = cd.cd_besoin), 0
+                    ) AS total_distribue_global,
+                    cd.cd_quantite AS stock_initial
+                FROM bngrc_collecteDetails cd
+                JOIN bngrc_collecte c ON cd.cd_collecte = c.c_id
+                JOIN bngrc_besoin b ON cd.cd_besoin = b.b_id
+                WHERE cd.cd_besoin = :besoin_id
+                ORDER BY c.c_date ASC, cd.cd_id ASC";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':besoin_id' => $besoinId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupérer le stock total disponible par besoin (toutes collectes - distributions)
+     */
+    public function getStockDisponibleParBesoin(int $besoinId): int {
+        $sql = "SELECT 
+                    COALESCE(SUM(cd.cd_quantite), 0) - COALESCE(
+                        (SELECT SUM(dd.dd_quantite) 
+                         FROM bngrc_distributionDetails dd 
+                         WHERE dd.dd_besoin = :besoin_id_2), 0
+                    ) AS stock_disponible
+                FROM bngrc_collecteDetails cd
+                WHERE cd.cd_besoin = :besoin_id";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':besoin_id' => $besoinId, ':besoin_id_2' => $besoinId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return max(0, (int)($result['stock_disponible'] ?? 0));
+    }
+
+    /**
+     * Récupérer toutes les collectes avec stock disponible par besoin (pour simulation)
+     */
+    public function getAllCollectesAvecStockParBesoin(): array {
+        $sql = "SELECT 
+                    cd.cd_id,
+                    cd.cd_collecte,
+                    cd.cd_besoin AS besoin_id,
+                    cd.cd_quantite AS quantite_collectee,
+                    c.c_date,
+                    b.b_libelle AS besoin_libelle
+                FROM bngrc_collecteDetails cd
+                JOIN bngrc_collecte c ON cd.cd_collecte = c.c_id
+                JOIN bngrc_besoin b ON cd.cd_besoin = b.b_id
+                ORDER BY cd.cd_besoin, c.c_date ASC, cd.cd_id ASC";
+        
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Insérer une collecte avec ses détails (date + liste de besoins/quantités)
      */
     public function insererCollecte(string $date, array $details): int {

@@ -32,6 +32,87 @@ class BesoinRepository {
     }
 
     /**
+     * Récupérer les besoins pas encore satisfaits dans une ville
+     * Un besoin est non satisfait si la quantité distribuée < quantité demandée
+     */
+    public function findBesoinsNonSatisfaitsParVille(int $villeId): array {
+        $sql = "SELECT 
+                    bv.bv_id,
+                    bv.bv_besoin AS besoin_id,
+                    bv.bv_quantite AS quantite_demandee,
+                    bv.bv_ville AS ville_id,
+                    v.v_nom AS ville_nom,
+                    b.b_libelle AS besoin_libelle,
+                    b.b_prixUnitraire AS prix_unitaire,
+                    ub.ub_libelle AS unite,
+                    COALESCE(SUM(dd.dd_quantite), 0) AS quantite_distribuee
+                FROM bngrc_besoinVille bv
+                JOIN bngrc_ville v ON bv.bv_ville = v.v_id
+                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
+                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+                LEFT JOIN bngrc_distributionDetails dd ON dd.dd_besoin = bv.bv_besoin AND dd.dd_ville = bv.bv_ville
+                WHERE bv.bv_ville = :ville_id
+                GROUP BY bv.bv_id, bv.bv_besoin, bv.bv_quantite, bv.bv_ville, v.v_nom, b.b_libelle, b.b_prixUnitraire, ub.ub_libelle
+                HAVING quantite_distribuee < bv.bv_quantite
+                ORDER BY b.b_libelle";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Calculer le reste (quantité) de besoin à satisfaire
+     * reste = besoin_total - déjà_distribué
+     */
+    public function calculerResteASatisfaire(int $villeId, int $besoinId): int {
+        $sql = "SELECT 
+                    bv.bv_quantite AS quantite_demandee,
+                    COALESCE(SUM(dd.dd_quantite), 0) AS quantite_distribuee
+                FROM bngrc_besoinVille bv
+                LEFT JOIN bngrc_distributionDetails dd ON dd.dd_besoin = bv.bv_besoin AND dd.dd_ville = bv.bv_ville
+                WHERE bv.bv_ville = :ville_id AND bv.bv_besoin = :besoin_id
+                GROUP BY bv.bv_quantite";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId, ':besoin_id' => $besoinId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$result) {
+            return 0;
+        }
+        
+        $reste = (int)$result['quantite_demandee'] - (int)$result['quantite_distribuee'];
+        return max(0, $reste);
+    }
+
+    /**
+     * Récupérer tous les besoins de toutes les villes avec leur état de satisfaction
+     */
+    public function findAllBesoinsAvecEtat(): array {
+        $sql = "SELECT 
+                    bv.bv_id,
+                    bv.bv_besoin AS besoin_id,
+                    bv.bv_quantite AS quantite_demandee,
+                    bv.bv_ville AS ville_id,
+                    v.v_nom AS ville_nom,
+                    b.b_libelle AS besoin_libelle,
+                    b.b_prixUnitraire AS prix_unitaire,
+                    ub.ub_libelle AS unite,
+                    COALESCE(SUM(dd.dd_quantite), 0) AS quantite_distribuee,
+                    (bv.bv_quantite - COALESCE(SUM(dd.dd_quantite), 0)) AS reste
+                FROM bngrc_besoinVille bv
+                JOIN bngrc_ville v ON bv.bv_ville = v.v_id
+                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
+                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+                LEFT JOIN bngrc_distributionDetails dd ON dd.dd_besoin = bv.bv_besoin AND dd.dd_ville = bv.bv_ville
+                GROUP BY bv.bv_id, bv.bv_besoin, bv.bv_quantite, bv.bv_ville, v.v_nom, b.b_libelle, b.b_prixUnitraire, ub.ub_libelle
+                ORDER BY v.v_nom, b.b_libelle";
+        
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Insert a single besoin
      */
     public function insertBesoinVille(int $besoinId, int $villeId, int $quantite)
@@ -77,70 +158,6 @@ class BesoinRepository {
             }
             return false;
         }
-    }
-
-    /**
-     * Récupérer les besoins pas encore satisfaits dans une ville
-     * (reste à distribuer > 0)
-     */
-    public function getBesoinsNonSatisfaits(int $villeId): array
-    {
-        $sql = "SELECT 
-                    bv.bv_id,
-                    bv.bv_besoin,
-                    bv.bv_quantite,
-                    bv.bv_ville,
-                    b.b_libelle,
-                    ub.ub_libelle AS unite,
-                    v.v_nom AS ville
-                FROM bngrc_besoinVille bv
-                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
-                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
-                JOIN bngrc_ville v ON bv.bv_ville = v.v_id
-                WHERE bv.bv_ville = :villeId
-                ORDER BY b.b_libelle";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':villeId' => $villeId]);
-        $besoins = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $result = [];
-        foreach ($besoins as $besoin) {
-            $reste = $this->getResteADistribuer((int) $besoin['bv_besoin'], $villeId);
-            if ($reste > 0) {
-                $besoin['reste'] = $reste;
-                $result[] = $besoin;
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * Calculer le reste (quantité) de besoin à satisfaire
-     * reste = besoin_total - déjà_distribué
-     */
-    public function getResteADistribuer(int $besoinId, int $villeId): int
-    {
-        // Total besoin pour cette ville
-        $sqlBesoin = "SELECT SUM(bv_quantite) 
-                      FROM bngrc_besoinVille 
-                      WHERE bv_besoin = :besoinId AND bv_ville = :villeId";
-        $stmt = $this->pdo->prepare($sqlBesoin);
-        $stmt->execute([':besoinId' => $besoinId, ':villeId' => $villeId]);
-        $totalBesoin = (int) $stmt->fetchColumn();
-
-        // Total déjà distribué pour ce besoin dans cette ville
-        $sqlDistrib = "SELECT SUM(dd_quantite) 
-                       FROM bngrc_distributionDetails 
-                       WHERE dd_besoin = :besoinId AND dd_ville = :villeId";
-        $stmt2 = $this->pdo->prepare($sqlDistrib);
-        $stmt2->execute([':besoinId' => $besoinId, ':villeId' => $villeId]);
-        $totalDistribue = (int) $stmt2->fetchColumn();
-
-        $reste = $totalBesoin - $totalDistribue;
-        if ($reste < 0) {
-            $reste = 0;
-        }
-        return $reste;
     }
 
 }
