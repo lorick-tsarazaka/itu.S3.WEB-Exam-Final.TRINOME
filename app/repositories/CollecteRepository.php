@@ -11,6 +11,21 @@ class CollecteRepository {
         $this->pdo = $pdo;
     }
 
+    //  function to get collecte orderer by date et id
+    public function findByDateId() {
+        $st = $this->pdo->prepare("SELECT * FROM bngrc_collecte ORDER BY c_date ASC, c_id ASC");
+
+        $st->execute();
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findAllDetail($id_collecte) {
+        $st = $this->pdo->prepare("SELECT * FROM bngrc_collecteDetails WHERE cd_collecte = ?");
+
+        $st->execute([(int)$id_collecte]);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    } 
+
     /**
      * Récupérer toutes les collectes avec le nombre de détails et la date
      */
