@@ -146,6 +146,22 @@ class DistributionRepository {
     }
 
     /**
+     * Récupérer le total distribué pour un besoin d'une ville
+     */
+    public function getTotalDistribueParBesoinVille(int $villeId, int $besoinId): int {
+        $sql = "SELECT 
+                    COALESCE(SUM(dd.dd_quantite), 0) AS total
+                FROM bngrc_distributionDetails dd
+                WHERE dd.dd_ville = ? AND dd.dd_besoin = ?";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$villeId, $besoinId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return (int)($result['total'] ?? 0);
+    }
+
+    /**
      * Insérer un détail de distribution (utilisé par la simulation)
      */
     public function insererDistributionDetail(int $distributionId, int $besoinId, int $quantite, int $villeId): int {
