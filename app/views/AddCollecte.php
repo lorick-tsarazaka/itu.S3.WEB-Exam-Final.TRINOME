@@ -1,4 +1,11 @@
 <?php $pageTitle = "Nouvelle Collecte"; ?>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Collectes', 'url' => '/collecte'],
+        ['label' => 'Nouvelle collecte']
+    ];
+?>
 <?php include ("inc/header.php"); ?>
 
 <main class="main-content">
@@ -7,13 +14,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light mb-2">
-                            <li class="breadcrumb-item"><a href="/"><i class="bi bi-house-door"></i> Accueil</a></li>
-                            <li class="breadcrumb-item"><a href="/collecte">Collectes</a></li>
-                            <li class="breadcrumb-item active">Nouvelle collecte</li>
-                        </ol>
-                    </nav>
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-plus-circle me-2"></i>Nouvelle Collecte
                     </h1>

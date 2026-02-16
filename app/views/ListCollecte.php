@@ -1,4 +1,10 @@
 <?php $pageTitle = "Liste des Collectes"; ?>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Collectes']
+    ];
+?>
 <?php include ("inc/header.php"); ?>
 
 <main class="main-content">
@@ -7,12 +13,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light mb-2">
-                            <li class="breadcrumb-item"><a href="/"><i class="bi bi-house-door"></i> Accueil</a></li>
-                            <li class="breadcrumb-item active">Collectes</li>
-                        </ol>
-                    </nav>
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-collection me-2"></i>Liste des Collectes
                     </h1>
@@ -21,7 +22,7 @@
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="/collecte/add" class="btn btn-light btn-lg shadow-sm">
+                    <a href="/collecte/add" class="btn btn-light shadow-sm">
                         <i class="bi bi-plus-circle me-2"></i>Créer une collecte
                     </a>
                 </div>
@@ -46,7 +47,7 @@
         <?php endif; ?>
 
         <!-- Résumé -->
-        <div class="d-flex gap-2 flex-wrap flex-md-nowrap mb-4">
+        <div class="d-flex gap-2 flex-wrap flex-md-nowrap mb-4 align-items-stretch">
             <div class="col-md-4">
                 <div class="stat-card stat-card-primary">
                     <div class="stat-card-body">
