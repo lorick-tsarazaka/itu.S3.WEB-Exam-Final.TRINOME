@@ -44,3 +44,30 @@ create table bngrc_uniteBesoin (
   ub_libelle varchar(255) not null
 );
 
+-- Table bngrc_besoin
+create table bngrc_besoin (
+  b_id int primary key auto_increment,
+  b_libelle varchar(255) not null,
+  b_prixUnitraire decimal(10, 2) not null,
+  b_categorie int not null,
+  b_unite int not null,
+  foreign key (b_categorie) references bngrc_categorieBesoin(cb_id),
+  foreign key (b_unite) references bngrc_uniteBesoin(ub_id)
+);
+
+-- Table bngrc_besoinVille
+create table bngrc_besoinVille (
+  bv_id int primary key auto_increment,
+  bv_besoin int not null,
+  bv_quantite int not null,
+  bv_ville int not null,
+  foreign key (bv_besoin) references bngrc_besoin(b_id),
+  foreign key (bv_ville) references bngrc_ville(v_id)
+);
+
+-- Table bngrc_collecte
+create table bngrc_collecte (
+  c_id int primary key auto_increment,
+  c_date date not null
+);
+
