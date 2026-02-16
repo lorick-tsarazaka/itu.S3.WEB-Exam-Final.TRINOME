@@ -71,3 +71,31 @@ create table bngrc_collecte (
   c_date date not null
 );
 
+-- Table bngrc_collecteDetails
+create table bngrc_collecteDetails (
+  cd_id int primary key auto_increment,
+  cd_collecte int not null,
+  cd_besoin int not null,
+  cd_quantite int not null,
+  foreign key (cd_collecte) references bngrc_collecte(c_id),
+  foreign key (cd_besoin) references bngrc_besoin(b_id)
+);
+
+-- Table bngrc_distribution
+create table bngrc_distribution (
+  d_id int primary key auto_increment,
+  d_date date not null
+);
+
+-- Table bngrc_distributionDetails
+create table bngrc_distributionDetails (
+  dd_id int primary key auto_increment,
+  dd_don int not null,
+  dd_besoin int not null,
+  dd_quantite int not null,
+  dd_ville int not null,
+  foreign key (dd_don) references bngrc_collecte(c_id),
+  foreign key (dd_besoin) references bngrc_besoin(b_id),
+  foreign key (dd_ville) references bngrc_ville(v_id)
+);
+
