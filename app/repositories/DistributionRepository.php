@@ -4,7 +4,7 @@ namespace app\repositories;
 
 use PDO;
 
-class BesoinRepository {
+class DistributionRepository {
     private PDO $pdo;
 
     public function __construct(PDO $pdo) {
@@ -38,6 +38,8 @@ class BesoinRepository {
 
         $st->execute([(int)$id_ville]);
         return $st->fetchAll(PDO::FETCH_ASSOC);
+
+    }
     public function insererDistribution(string $date, array $details): int {
         try {
             $this->pdo->beginTransaction();
