@@ -1,4 +1,10 @@
 <?php $pageTitle = "Dons"; ?>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Dons']
+    ];
+?>
 <?php include ("inc/header.php"); ?>
 
 <main class="main-content">
@@ -7,12 +13,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light mb-2">
-                            <li class="breadcrumb-item"><a href="/">Tableau de bord</a></li>
-                            <li class="breadcrumb-item active">Dons</li>
-                        </ol>
-                    </nav>
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-gift me-2"></i>Gestion des Dons
                     </h1>

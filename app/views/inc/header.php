@@ -34,6 +34,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Achats' ? 'active' : '' ?>" href="<?= $base ?>/achats">
+                            <i class="bi bi-cart3 me-1"></i> Achats
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link px-3 <?= ($page_title ?? '') === 'Saisie Besoins' ? 'active' : '' ?>" href="<?= $base ?>/besoins">
                             <i class="bi bi-list-check me-1"></i> Besoins
                         </a>
@@ -41,6 +46,11 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Simulation de Dons' ? 'active' : '' ?>" href="<?= $base ?>/simulation">
                             <i class="bi bi-arrow-repeat me-1"></i> Simulation
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Récapitulation' ? 'active' : '' ?>" href="<?= $base ?>/recapitulation">
+                            <i class="bi bi-graph-up me-1"></i> Récapitulation
                         </a>
                     </li>
                 </ul>
