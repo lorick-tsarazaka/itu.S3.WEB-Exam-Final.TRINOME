@@ -2,6 +2,19 @@
 drop database final_exam_s3;
 create database final_exam_s3;
 use final_exam_s3;
+ drop TABLE IF EXISTS bngrc_regionVille;
+ drop TABLE IF EXISTS bngrc_besoinVille;
+ drop TABLE IF EXISTS bngrc_sinistre;
+ drop TABLE IF EXISTS bngrc_besoin;
+ drop TABLE IF EXISTS bngrc_categorieBesoin;
+ drop TABLE IF EXISTS bngrc_uniteBesoin;
+ drop TABLE IF EXISTS bngrc_statusBesoinVille;
+ drop TABLE IF EXISTS bngrc_collecte;
+ drop TABLE IF EXISTS bngrc_collecteDetails;
+ drop TABLE IF EXISTS bngrc_distribution;
+ drop TABLE IF EXISTS bngrc_distributionDetails;
+ drop TABLE IF EXISTS bngrc_ville;
+ drop TABLE IF EXISTS bngrc_region; 
 
 -- Table bngrc_region
 create table bngrc_region (
