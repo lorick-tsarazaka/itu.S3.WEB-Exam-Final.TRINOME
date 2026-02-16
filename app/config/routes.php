@@ -5,6 +5,7 @@ use app\controllers\TableauBordController;
 use app\controllers\DistributionController;
 use app\controllers\BesoinController;
 use app\controllers\CollecteController;
+use app\controllers\SimulationController;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
 use flight\net\Router;
@@ -70,6 +71,17 @@ $router->group('', function(Router $router) use ($app) {
     $router->get('/collecte/details/@id', function($id) use ($app) {
         $controller = new CollecteController($app);
         $controller->getDetails((int) $id);
+    });
+
+    // Simulation de dispatch de dons
+    $router->get('/simulation', function() use ($app) {
+        $controller = new SimulationController($app);
+        $controller->index();
+    });
+
+    $router->post('/simulation/executer', function() use ($app) {
+        $controller = new SimulationController($app);
+        $controller->executer();
     });
 
 }, [ SecurityHeadersMiddleware::class ]);

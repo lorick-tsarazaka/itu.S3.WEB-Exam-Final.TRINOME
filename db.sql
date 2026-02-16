@@ -2,6 +2,19 @@
 drop database final_exam_s3;
 create database final_exam_s3;
 use final_exam_s3;
+ drop TABLE IF EXISTS bngrc_regionVille;
+ drop TABLE IF EXISTS bngrc_besoinVille;
+ drop TABLE IF EXISTS bngrc_sinistre;
+ drop TABLE IF EXISTS bngrc_besoin;
+ drop TABLE IF EXISTS bngrc_categorieBesoin;
+ drop TABLE IF EXISTS bngrc_uniteBesoin;
+ drop TABLE IF EXISTS bngrc_statusBesoinVille;
+ drop TABLE IF EXISTS bngrc_collecte;
+ drop TABLE IF EXISTS bngrc_collecteDetails;
+ drop TABLE IF EXISTS bngrc_distribution;
+ drop TABLE IF EXISTS bngrc_distributionDetails;
+ drop TABLE IF EXISTS bngrc_ville;
+ drop TABLE IF EXISTS bngrc_region; 
 
 -- Table bngrc_region
 create table bngrc_region (
@@ -55,14 +68,22 @@ create table bngrc_besoin (
   foreign key (b_unite) references bngrc_uniteBesoin(ub_id)
 );
 
+-- Table bngrc_statusBesoinVille: état du besoin pour une ville (ex: attendu, partiel, couvert)
+create table bngrc_statusBesoinVille (
+  sbv_id int primary key auto_increment,
+  sbv_libelle varchar(255) not null
+);
+
 -- Table bngrc_besoinVille
 create table bngrc_besoinVille (
   bv_id int primary key auto_increment,
   bv_besoin int not null,
   bv_quantite int not null,
   bv_ville int not null,
+  bv_status int not null,
   foreign key (bv_besoin) references bngrc_besoin(b_id),
   foreign key (bv_ville) references bngrc_ville(v_id)
+  , foreign key (bv_status) references bngrc_statusBesoinVille(sbv_id)
 );
 
 -- Table bngrc_collecte
@@ -98,4 +119,3 @@ create table bngrc_distributionDetails (
   foreign key (dd_besoin) references bngrc_besoin(b_id),
   foreign key (dd_ville) references bngrc_ville(v_id)
 );
-
