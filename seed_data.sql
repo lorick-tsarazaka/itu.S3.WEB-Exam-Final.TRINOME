@@ -69,8 +69,8 @@ INSERT INTO bngrc_uniteBesoin (ub_id, ub_libelle) VALUES
 -- Besoins (explicit ids to reference later)
 INSERT INTO bngrc_besoin (b_id, b_libelle, b_prixUnitraire, b_categorie, b_unite) VALUES
 (1 , 'Ariary Malgache', 1.00, 1, 6),
-(2 , 'Euro', 1.00, 1, 7),
-(3 , 'Dollar US', 1.00, 1, 8),
+(2 , 'Euro', 5176.00, 1, 7),
+(3 , 'Dollar US',4364.82, 1, 8),
 (4, 'Eau potable', 0.50, 3, 2),
 (5, 'Riz', 0.90, 2, 3),
 (6, 'Conserves alimentaires', 2.50, 2, 3),
