@@ -55,14 +55,22 @@ create table bngrc_besoin (
   foreign key (b_unite) references bngrc_uniteBesoin(ub_id)
 );
 
+-- Table bngrc_statusBesoinVille: état du besoin pour une ville (ex: attendu, partiel, couvert)
+create table bngrc_statusBesoinVille (
+  sbv_id int primary key auto_increment,
+  sbv_libelle varchar(255) not null
+);
+
 -- Table bngrc_besoinVille
 create table bngrc_besoinVille (
   bv_id int primary key auto_increment,
   bv_besoin int not null,
   bv_quantite int not null,
   bv_ville int not null,
+  bv_status int not null,
   foreign key (bv_besoin) references bngrc_besoin(b_id),
   foreign key (bv_ville) references bngrc_ville(v_id)
+  , foreign key (bv_status) references bngrc_statusBesoinVille(sbv_id)
 );
 
 -- Table bngrc_collecte
