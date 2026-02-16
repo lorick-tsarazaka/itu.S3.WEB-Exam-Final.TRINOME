@@ -14,7 +14,7 @@ class SimulationController {
     }
 
     /**
-     * Afficher la page de simulation avec la liste des distributions par ville
+     * Afficher la page de simulation (état initial)
      */
     public function index() {
         $db = Flight::db();
@@ -31,13 +31,38 @@ class SimulationController {
     }
 
     /**
-     * Exécuter la simulation de dispatch
+     * Simuler le dispatch (aperçu sans insertion en base)
      */
     public function executer() {
         $db = Flight::db();
         $service = new SimulationDonService($db);
 
-        // Exécuter la simulation
+        // Simuler SANS enregistrer en base
+        $result = $service->simulerSansEnregistrer();
+
+        // Grouper par ville pour l'affichage
+        $simulationParVille = $service->grouperSimulationParVille($result);
+
+        $statistiques = $service->getStatistiquesGlobales();
+
+        Flight::render('simulation', [
+            'csp_nonce' => Flight::get('csp_nonce'),
+            'distributionsParVille' => $service->getDistributionsGroupeesParVille(),
+            'simulationParVille' => $simulationParVille,
+            'statistiques' => $statistiques,
+            'simulation_result' => $result,
+            'mode_apercu' => true
+        ]);
+    }
+
+    /**
+     * Valider et enregistrer la simulation en base
+     */
+    public function valider() {
+        $db = Flight::db();
+        $service = new SimulationDonService($db);
+
+        // Exécuter et ENREGISTRER en base
         $result = $service->simulerDispatch();
 
         // Récupérer les données mises à jour
@@ -48,7 +73,7 @@ class SimulationController {
             'csp_nonce' => Flight::get('csp_nonce'),
             'distributionsParVille' => $distributionsParVille,
             'statistiques' => $statistiques,
-            'simulation_result' => $result
+            'validation_result' => $result
         ]);
     }
 }

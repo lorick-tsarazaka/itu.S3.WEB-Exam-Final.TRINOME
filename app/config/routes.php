@@ -85,6 +85,11 @@ $router->group('', function(Router $router) use ($app) {
         $controller->executer();
     });
 
+    $router->post('/simulation/valider', function() use ($app) {
+        $controller = new SimulationController($app);
+        $controller->valider();
+    });
+
     // Récapitulation
     $router->get('/recapitulation', function() use ($app) {
         $controller = new RecapitulationController();

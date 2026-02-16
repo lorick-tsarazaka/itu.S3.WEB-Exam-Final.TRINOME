@@ -23,7 +23,7 @@
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
                     <form action="/simulation/executer" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-light btn-lg">
+                        <button type="submit" class="btn btn-light btn-lg ">
                             <i class="bi bi-play-fill me-1"></i>Lancer la simulation
                         </button>
                     </form>
@@ -78,27 +78,137 @@
         </div>
         <?php endif; ?>
 
-        <!-- Message de succès après simulation -->
-        <?php if (isset($simulation_result) && $simulation_result['success']): ?>
+        <!-- Message de succès après validation -->
+        <?php if (isset($validation_result) && $validation_result['success']): ?>
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <div class="d-flex align-items-center">
                 <i class="bi bi-check-circle-fill me-2 fs-4"></i>
                 <div>
-                    <strong>Simulation effectuée avec succès !</strong><br>
+                    <strong>Distribution validée et enregistrée avec succès !</strong><br>
                     <small>
-                        <?= count($simulation_result['distributions']) ?> distributions créées | 
-                        <?= $simulation_result['villes_traitees'] ?> villes traitées | 
-                        <?= $simulation_result['besoins_satisfaits'] ?> besoins satisfaits
+                        <?= count($validation_result['distributions']) ?> distributions créées | 
+                        <?= $validation_result['villes_traitees'] ?> villes traitées | 
+                        <?= $validation_result['besoins_satisfaits'] ?> besoins satisfaits
                     </small>
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <?php elseif (isset($simulation_result) && !$simulation_result['success']): ?>
+        <?php elseif (isset($validation_result) && !$validation_result['success']): ?>
         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Erreur :</strong> <?= htmlspecialchars($simulation_result['error'] ?? 'Erreur inconnue') ?>
+            <strong>Erreur :</strong> <?= htmlspecialchars($validation_result['error'] ?? 'Erreur inconnue') ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
+
+        <!-- Aperçu de la simulation (non enregistré) -->
+        <?php if (isset($mode_apercu) && $mode_apercu && isset($simulationParVille) && !empty($simulationParVille)): ?>
+        <div class="alert alert-warning mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <strong>Aperçu de la simulation</strong> — Ces données ne sont pas encore enregistrées. Cliquez sur <strong>Valider</strong> pour enregistrer.
+                </div>
+                <form action="/simulation/valider" method="POST" class="d-inline ms-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Valider et enregistrer
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <?php foreach ($simulationParVille as $ville): ?>
+            <div class="col-12">
+                <div class="card modern-card border-warning">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="city-icon me-3" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title mb-1"><?= htmlspecialchars($ville['ville_nom']) ?></h5>
+                                <small class="text-muted">
+                                    <?= count($ville['besoins']) ?> besoin(s) | 
+                                    Distribué: <?= number_format($ville['total_distribue']) ?> / <?= number_format($ville['total_demande']) ?>
+                                </small>
+                            </div>
+                        </div>
+                        <span class="badge bg-warning text-dark px-3 py-2">
+                            <i class="bi bi-eye me-1"></i>Aperçu
+                        </span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover modern-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Besoin</th>
+                                        <th class="text-center">Demandé</th>
+                                        <th class="text-center">Distribué</th>
+                                        <th class="text-center">Reste</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($ville['besoins'] as $besoin): ?>
+                                    <tr class="<?= $besoin['reste'] == 0 ? 'table-success' : '' ?>">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="besoin-icon bg-primary-subtle text-primary me-2">
+                                                    <i class="bi bi-box"></i>
+                                                </div>
+                                                <div>
+                                                    <strong><?= htmlspecialchars($besoin['besoin_libelle']) ?></strong>
+                                                    <small class="d-block text-muted"><?= htmlspecialchars($besoin['unite']) ?></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><span class="fw-semibold"><?= number_format($besoin['quantite_demandee']) ?></span></td>
+                                        <td class="text-center"><span class="text-success fw-semibold"><?= number_format($besoin['quantite_distribuee']) ?></span></td>
+                                        <td class="text-center">
+                                            <?php if ($besoin['reste'] > 0): ?>
+                                                <span class="text-danger fw-semibold"><?= number_format($besoin['reste']) ?></span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success"><i class="bi bi-check"></i> Complet</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="p-2">
+                                    <div class="fw-bold text-primary fs-5"><?= number_format($ville['total_demande']) ?></div>
+                                    <small class="text-muted">Total demandé</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2">
+                                    <div class="fw-bold text-success fs-5"><?= number_format($ville['total_distribue']) ?></div>
+                                    <small class="text-muted">Total distribué</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2">
+                                    <div class="fw-bold text-danger fs-5"><?= number_format($ville['total_reste']) ?></div>
+                                    <small class="text-muted">Total restant</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php elseif (isset($mode_apercu) && $mode_apercu): ?>
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Aucune distribution à effectuer.</strong> Tous les besoins sont déjà couverts ou aucun stock disponible.
         </div>
         <?php endif; ?>
 
