@@ -1,6 +1,7 @@
 <?php
 
 use app\controllers\MainController;
+use app\controllers\TableauBordController;
 use app\controllers\DistributionController;
 use app\controllers\BesoinController;
 use app\middlewares\SecurityHeadersMiddleware;
@@ -13,6 +14,17 @@ $router->group('', function(Router $router) use ($app) {
         $controller = new MainController($app);
         $controller->home();
     });
+}, [ SecurityHeadersMiddleware::class ]);
+
+//  Tableau de bord Routes
+$router->group('', function(Router $router) use ($app) {
+
+    //  Register
+    $router->get('/tableauBord', function() use ($app) {
+        $controller = new TableauBordController($app);
+        $controller->showTableauBord();
+    });
+
 
     // Saisie Distribution
     $router->get('/distribution/saisie', function() use ($app) {
