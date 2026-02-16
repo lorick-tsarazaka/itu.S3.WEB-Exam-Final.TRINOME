@@ -39,8 +39,8 @@ class BesoinRepository {
         $db = $this->pdo;
         try {
             $stmt = $db->runQuery(
-                'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville) VALUES (?, ?, ?)',
-                [ $besoinId, $quantite, $villeId ]
+                'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville, bv_status) VALUES (?, ?, ?, ?)',
+                [ $besoinId, $quantite, $villeId, 1 ]
             );
             return (int)$db->lastInsertId();
         } catch (PDOException $e) {
@@ -64,8 +64,8 @@ class BesoinRepository {
                     continue;
                 }
                 $db->runQuery(
-                    'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville) VALUES (?, ?, ?)',
-                    [ $besoinId, $quantite, $villeId ]
+                    'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville, bv_status) VALUES (?, ?, ?, ?)',
+                    [ $besoinId, $quantite, $villeId, 1 ]
                 );
                 $inserted[] = (int)$db->lastInsertId();
             }

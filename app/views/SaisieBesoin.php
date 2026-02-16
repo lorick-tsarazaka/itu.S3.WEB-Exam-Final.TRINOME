@@ -65,10 +65,22 @@
                         <label class="form-label">Besoin</label>
                         <select name="besoins[0][besoin]" class="form-control">
                             <?php if (!empty($besoins)): ?>
-                                <?php foreach ($besoins as $b): ?>
-                                    <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
-                                    <?php $label = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
-                                    <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($label) ?></option>
+                                <?php
+                                    $grouped = [];
+                                    foreach ($besoins as $b) {
+                                        $cat = is_array($b) ? ($b['categorie'] ?? 'Autre') : ($b->categorie ?? 'Autre');
+                                        $grouped[$cat][] = $b;
+                                    }
+                                ?>
+                                <?php foreach ($grouped as $cat => $items): ?>
+                                    <optgroup label="<?= htmlspecialchars($cat) ?>">
+                                        <?php foreach ($items as $b): ?>
+                                            <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
+                                            <?php $name = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
+                                            <?php $unite = is_array($b) ? ($b['unite'] ?? '') : ($b->unite ?? ''); ?>
+                                            <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($cat . ' - ' . $name . ' (' . $unite . ')') ?></option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <option value="">-- Aucun besoin disponible --</option>
@@ -120,10 +132,22 @@
             <label class="form-label">Besoin</label>
             <select name="besoins[__INDEX__][besoin]" class="form-control">
                 <?php if (!empty($besoins)): ?>
-                    <?php foreach ($besoins as $b): ?>
-                        <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
-                        <?php $label = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
-                        <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($label) ?></option>
+                    <?php
+                        $grouped = [];
+                        foreach ($besoins as $b) {
+                            $cat = is_array($b) ? ($b['categorie'] ?? 'Autre') : ($b->categorie ?? 'Autre');
+                            $grouped[$cat][] = $b;
+                        }
+                    ?>
+                    <?php foreach ($grouped as $cat => $items): ?>
+                        <optgroup label="<?= htmlspecialchars($cat) ?>">
+                            <?php foreach ($items as $b): ?>
+                                <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
+                                <?php $name = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
+                                <?php $unite = is_array($b) ? ($b['unite'] ?? '') : ($b->unite ?? ''); ?>
+                                <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($cat . ' - ' . $name . ' (' . $unite . ')') ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <option value="">-- Aucun besoin disponible --</option>
