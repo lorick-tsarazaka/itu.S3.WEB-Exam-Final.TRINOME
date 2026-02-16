@@ -51,16 +51,16 @@ class DistributionRepository {
             $distributionId = $this->pdo->lastInsertId();
 
             // 2. Insérer les détails dans bngrc_distributionDetails
-            $sqlDetails = "INSERT INTO bngrc_distributionDetails (dd_don, dd_besoin, dd_quantite, dd_ville) 
-                           VALUES (:dd_don, :dd_besoin, :dd_quantite, :dd_ville)";
+            $sqlDetails = "INSERT INTO bngrc_distributionDetails (dd_distribution, dd_besoin, dd_quantite, dd_ville) 
+                           VALUES (:dd_distribution, :dd_besoin, :dd_quantite, :dd_ville)";
             $stmtDetails = $this->pdo->prepare($sqlDetails);
 
             foreach ($details as $detail) {
                 $stmtDetails->execute([
-                    ':dd_don'      => $detail['dd_don'],
-                    ':dd_besoin'   => $detail['dd_besoin'],
-                    ':dd_quantite' => $detail['dd_quantite'],
-                    ':dd_ville'    => $detail['dd_ville']
+                    ':dd_distribution' => $distributionId,
+                    ':dd_besoin'       => $detail['dd_besoin'],
+                    ':dd_quantite'     => $detail['dd_quantite'],
+                    ':dd_ville'        => $detail['dd_ville']
                 ]);
             }
 
