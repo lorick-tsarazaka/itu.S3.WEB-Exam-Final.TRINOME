@@ -24,21 +24,6 @@
                             <i class="bi bi-speedometer2 me-1"></i> Tableau de bord
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Villes' ? 'active' : '' ?>" href="/villes">
-                            <i class="bi bi-geo-alt me-1"></i> Villes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Besoins' ? 'active' : '' ?>" href="/besoins">
-                            <i class="bi bi-list-check me-1"></i> Besoins
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Dons' ? 'active' : '' ?>" href="/dons">
-                            <i class="bi bi-gift me-1"></i> Dons
-                        </a>
-                    </li>
                 </ul>
             </div>
         </div>

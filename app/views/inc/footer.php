@@ -22,8 +22,6 @@
                         <h6 class="text-white mb-3">Liens rapides</h6>
                         <ul class="list-unstyled footer-links">
                             <li><a href="/"><i class="bi bi-chevron-right me-1"></i>Tableau de bord</a></li>
-                            <li><a href="/villes"><i class="bi bi-chevron-right me-1"></i>Gestion des villes</a></li>
-                            <li><a href="/dons"><i class="bi bi-chevron-right me-1"></i>Suivi des dons</a></li>
                         </ul>
                     </div>
                     <div class="col-lg-4">
