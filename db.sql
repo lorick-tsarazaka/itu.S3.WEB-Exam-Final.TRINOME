@@ -1,7 +1,7 @@
 -- final_exam_s3
-drop database final_exam_s3;
-create database final_exam_s3;
-use final_exam_s3;
+--drop database final_exam_s3;
+--create database final_exam_s3;
+--use final_exam_s3;
 
 -- Table bngrc_region
 create table bngrc_region (
