@@ -11,7 +11,7 @@ class BesoinRepository {
         $this->pdo = $pdo;
     }
 
-
+    
     // function to get besoin for one ville
     public function findByVille($id_ville) {
         $st = $this->pdo->prepare("SELECT 

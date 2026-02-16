@@ -1,4 +1,10 @@
 <?php $pageTitle = "Saisie Distribution"; ?>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Saisie Distribution']
+    ];
+?>
 <?php include ("inc/header.php"); ?>
 
 <main class="main-content">
@@ -7,12 +13,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light mb-2">
-                            <li class="breadcrumb-item"><a href="/"><i class="bi bi-house-door"></i> Accueil</a></li>
-                            <li class="breadcrumb-item active">Saisie Distribution</li>
-                        </ol>
-                    </nav>
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-truck me-2"></i>Saisie Distribution
                     </h1>
