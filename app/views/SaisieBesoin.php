@@ -3,6 +3,12 @@
     include('inc/doctype.php');
 ?>
 <body>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Saisie Besoins']
+    ];
+?>
 <?php include('inc/header.php'); ?>
 
 <?php $base = defined('BASE_URL') ? BASE_URL : ''; ?>
@@ -12,15 +18,17 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-clipboard-plus me-2"></i><?= htmlspecialchars($page_title ?? 'Saisie des besoins') ?>
                     </h1>
                     <p class="hero-subtitle mb-0">Enregistrer les besoins par ville</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="<?= $base ?>/" class="btn btn-light btn-sm">
-                        <i class="bi bi-arrow-left me-1"></i>Retour
-                    </a>
+                    <span class="badge bg-light text-dark px-3 py-2">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <?= date('d F Y') ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -57,10 +65,22 @@
                         <label class="form-label">Besoin</label>
                         <select name="besoins[0][besoin]" class="form-control">
                             <?php if (!empty($besoins)): ?>
-                                <?php foreach ($besoins as $b): ?>
-                                    <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
-                                    <?php $label = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
-                                    <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($label) ?></option>
+                                <?php
+                                    $grouped = [];
+                                    foreach ($besoins as $b) {
+                                        $cat = is_array($b) ? ($b['categorie'] ?? 'Autre') : ($b->categorie ?? 'Autre');
+                                        $grouped[$cat][] = $b;
+                                    }
+                                ?>
+                                <?php foreach ($grouped as $cat => $items): ?>
+                                    <optgroup label="<?= htmlspecialchars($cat) ?>">
+                                        <?php foreach ($items as $b): ?>
+                                            <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
+                                            <?php $name = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
+                                            <?php $unite = is_array($b) ? ($b['unite'] ?? '') : ($b->unite ?? ''); ?>
+                                            <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($cat . ' - ' . $name . ' (' . $unite . ')') ?></option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <option value="">-- Aucun besoin disponible --</option>
@@ -112,10 +132,22 @@
             <label class="form-label">Besoin</label>
             <select name="besoins[__INDEX__][besoin]" class="form-control">
                 <?php if (!empty($besoins)): ?>
-                    <?php foreach ($besoins as $b): ?>
-                        <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
-                        <?php $label = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
-                        <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($label) ?></option>
+                    <?php
+                        $grouped = [];
+                        foreach ($besoins as $b) {
+                            $cat = is_array($b) ? ($b['categorie'] ?? 'Autre') : ($b->categorie ?? 'Autre');
+                            $grouped[$cat][] = $b;
+                        }
+                    ?>
+                    <?php foreach ($grouped as $cat => $items): ?>
+                        <optgroup label="<?= htmlspecialchars($cat) ?>">
+                            <?php foreach ($items as $b): ?>
+                                <?php $id = is_array($b) ? ($b['b_id'] ?? '') : ($b->b_id ?? ''); ?>
+                                <?php $name = is_array($b) ? ($b['b_libelle'] ?? '') : ($b->b_libelle ?? ''); ?>
+                                <?php $unite = is_array($b) ? ($b['unite'] ?? '') : ($b->unite ?? ''); ?>
+                                <option value="<?= htmlspecialchars($id) ?>"><?= htmlspecialchars($cat . ' - ' . $name . ' (' . $unite . ')') ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <option value="">-- Aucun besoin disponible --</option>

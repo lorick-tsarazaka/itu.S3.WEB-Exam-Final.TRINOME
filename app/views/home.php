@@ -1,4 +1,10 @@
 <?php $pageTitle = "Tableau de bord"; ?>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Tableau de bord']
+    ];
+?>
 <?php include ("inc/header.php"); ?>
 
 <?php
@@ -19,6 +25,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-speedometer2 me-2"></i>Tableau de Bord
                     </h1>
@@ -38,7 +45,7 @@
 
     <div class="container">
         <!-- Stats Cards -->
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-5 align-items-stretch">
             <div class="col-md-6 col-xl-3">
                 <div class="stat-card stat-card-primary">
                     <div class="stat-card-body">

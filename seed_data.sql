@@ -46,13 +46,14 @@ INSERT INTO bngrc_sinistre (s_id, s_nom, s_ville) VALUES
 
 -- Categories of needs
 INSERT INTO bngrc_categorieBesoin (cb_id, cb_libelle) VALUES
-(1, 'Alimentaire'),
-(2, 'Eau'),
-(3, 'Abri'),
-(4, 'Hygiène'),
-(5, 'Médicaments'),
-(6, 'Vêtements'),
-(7, 'Divers');
+(1, 'Argent'),
+(2, 'Alimentaire'),
+(3, 'Eau'),
+(4, 'Abri'),
+(5, 'Hygiène'),
+(6, 'Médicaments'),
+(7, 'Vêtements'),
+(8, 'Divers');
 
 -- Units
 INSERT INTO bngrc_uniteBesoin (ub_id, ub_libelle) VALUES
@@ -64,16 +65,17 @@ INSERT INTO bngrc_uniteBesoin (ub_id, ub_libelle) VALUES
 
 -- Besoins (explicit ids to reference later)
 INSERT INTO bngrc_besoin (b_id, b_libelle, b_prixUnitraire, b_categorie, b_unite) VALUES
-(1, 'Eau potable', 0.50, 2, 2),
-(2, 'Riz', 0.90, 1, 3),
-(3, 'Conserves alimentaires', 2.50, 1, 3),
-(4, 'Bâches / Tarpulin', 12.00, 3, 1),
-(5, 'Couvertures', 8.00, 3, 1),
-(6, 'Kits hygiène', 5.00, 4, 4),
-(7, 'Trousse médicale', 15.00, 5, 4),
-(8, 'Lait infantile', 6.00, 1, 3),
-(9, 'Filets anti-moustiques', 7.50, 3, 1),
-(10,'Vêtements', 4.00, 6, 1);
+(1 , 'Argent liquide', 1.00, 1, 1),
+(2, 'Eau potable', 0.50, 3, 2),
+(3, 'Riz', 0.90, 2, 3),
+(4, 'Conserves alimentaires', 2.50, 2, 3),
+(5, 'Bâches / Tarpulin', 12.00, 4, 1),
+(6, 'Couvertures', 8.00, 3, 1),
+(7, 'Kits hygiène', 5.00, 5, 4),
+(8, 'Trousse médicale', 15.00, 6, 4),
+(9, 'Lait infantile', 6.00, 2, 3),
+(10,'Filets anti-moustiques', 7.50, 3, 1),
+(11,'Vêtements', 4.00, 7, 1);
 
 -- Initial stock needs per city (besoinVille)
 INSERT INTO bngrc_besoinVille (bv_id, bv_besoin, bv_quantite, bv_ville) VALUES

@@ -1,8 +1,9 @@
-<?php $pageTitle = "Saisie Distribution"; ?>
+<?php $pageTitle = "Nouvelle Collecte"; ?>
 <?php
     $breadcrumbs = [
         ['label' => 'Accueil', 'url' => '/'],
-        ['label' => 'Saisie Distribution']
+        ['label' => 'Collectes', 'url' => '/collecte'],
+        ['label' => 'Nouvelle collecte']
     ];
 ?>
 <?php include ("inc/header.php"); ?>
@@ -15,17 +16,16 @@
                 <div class="col-lg-8">
                     <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
-                        <i class="bi bi-truck me-2"></i>Saisie Distribution
+                        <i class="bi bi-plus-circle me-2"></i>Nouvelle Collecte
                     </h1>
                     <p class="hero-subtitle mb-0">
-                        Enregistrer une nouvelle distribution de dons aux villes sinistrées
+                        Enregistrer une nouvelle collecte de dons
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <span class="badge bg-light text-dark px-3 py-2">
-                        <i class="bi bi-calendar3 me-1"></i>
-                        <?= date('d F Y') ?>
-                    </span>
+                    <a href="/collecte" class="btn btn-outline-light">
+                        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+                    </a>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
                         <i class="bi bi-check-circle-fill"></i>
                     </div>
                     <div>
-                        <strong>Succès !</strong> La distribution a été enregistrée avec succès.
+                        <strong>Succès !</strong> La collecte a été enregistrée avec succès.
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -66,19 +66,19 @@
         <div class="modern-card mb-5">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-clipboard-plus me-2 text-primary"></i>Nouvelle distribution
+                    <i class="bi bi-clipboard-plus me-2 text-primary"></i>Formulaire de collecte
                 </h5>
                 <span class="badge bg-primary-subtle text-primary">
                     <i class="bi bi-pencil-square me-1"></i>Formulaire
                 </span>
             </div>
             <div class="card-body">
-                <form action="/distribution/saisie" method="POST" id="formDistribution">
+                <form action="/collecte/add" method="POST" id="formCollecte">
                     <!-- Date unique -->
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <label for="date" class="form-label">
-                                <i class="bi bi-calendar-event me-1 text-primary"></i>Date de distribution <span class="text-danger">*</span>
+                                <i class="bi bi-calendar-event me-1 text-primary"></i>Date de collecte <span class="text-danger">*</span>
                             </label>
                             <input type="date" class="form-control" id="date" name="date" required 
                                    value="<?= date('Y-m-d') ?>">
@@ -87,13 +87,12 @@
 
                     <!-- Tableau des détails -->
                     <div class="table-responsive">
-                        <table class="table modern-table" id="tableDistribution">
+                        <table class="table modern-table" id="tableCollecte">
                             <thead>
                                 <tr>
                                     <th style="width:5%">#</th>
-                                    <th style="width:35%"><i class="bi bi-box-seam me-1"></i>Besoin</th>
-                                    <th style="width:25%"><i class="bi bi-geo-alt me-1"></i>Ville</th>
-                                    <th style="width:20%"><i class="bi bi-123 me-1"></i>Quantité</th>
+                                    <th style="width:50%"><i class="bi bi-box-seam me-1"></i>Besoin</th>
+                                    <th style="width:30%"><i class="bi bi-123 me-1"></i>Quantité</th>
                                     <th style="width:15%" class="text-center">Action</th>
                                 </tr>
                             </thead>
@@ -101,7 +100,7 @@
                                 <tr class="detail-row" data-index="0">
                                     <td class="row-number fw-bold text-primary">1</td>
                                     <td>
-                                        <select class="form-select" name="dd_besoin[]" required>
+                                        <select class="form-select" name="cd_besoin[]" required>
                                             <option value="">-- Choisir un besoin --</option>
                                             <?php foreach ($besoins as $besoin): ?>
                                                 <option value="<?= $besoin['b_id'] ?>">
@@ -111,17 +110,7 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <select class="form-select" name="dd_ville[]" required>
-                                            <option value="">-- Choisir une ville --</option>
-                                            <?php foreach ($villes as $ville): ?>
-                                                <option value="<?= $ville['v_id'] ?>">
-                                                    <?= htmlspecialchars($ville['v_nom']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="number" class="form-control" name="dd_quantite[]" min="1" required placeholder="Qté">
+                                        <input type="number" class="form-control" name="cd_quantite[]" min="1" required value="1">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-outline-danger btn-sm btn-remove-row" style="display:none;" title="Supprimer">
@@ -143,7 +132,7 @@
                                 <i class="bi bi-arrow-counterclockwise me-1"></i> Réinitialiser
                             </button>
                             <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-check-lg me-1"></i> Valider la distribution
+                                <i class="bi bi-check-lg me-1"></i> Valider la collecte
                             </button>
                         </div>
                     </div>
@@ -180,7 +169,7 @@
         rowIndex++;
 
         newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-        newRow.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
+        newRow.querySelectorAll('input[type="number"]').forEach(input => input.value = '1');
 
         const removeBtn = newRow.querySelector('.btn-remove-row');
         removeBtn.style.display = 'inline-flex';
@@ -189,7 +178,6 @@
         updateRowNumbers();
         updateRemoveButtons();
 
-        // Animation d'entrée
         newRow.style.animation = 'fadeInUp 0.3s ease forwards';
     });
 

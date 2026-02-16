@@ -29,8 +29,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Liste des Collectes' || ($pageTitle ?? '') === 'Nouvelle Collecte' ? 'active' : '' ?>" href="<?= $base ?>/collecte">
+                            <i class="bi bi-collection me-1"></i> Collectes
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Saisie Distribution' ? 'active' : '' ?>" href="/distribution/saisie">
-                            <i class="bi bi-truck me-1"></i> Saisie Distribution
+                            <i class="bi bi-truck me-1"></i> Distribution
                         </a>
                     </li>
                     <li class="nav-item">
@@ -45,3 +50,5 @@
 
     <!-- Spacer pour le fixed navbar -->
     <div class="navbar-spacer"></div>
+
+    <!-- Breadcrumb moved into each page's hero section to keep it inside the hero -->

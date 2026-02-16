@@ -21,7 +21,11 @@ class BesoinController
     public function index()
     {
         $db = $this->app->db();
-        $besoins = $db->fetchAll('SELECT b_id, b_libelle FROM bngrc_besoin ORDER BY b_libelle');
+        $besoins = $db->fetchAll("SELECT b.b_id, b.b_libelle, cb.cb_libelle AS categorie, ub.ub_libelle AS unite
+            FROM bngrc_besoin b
+            JOIN bngrc_categorieBesoin cb ON b.b_categorie = cb.cb_id
+            JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+            ORDER BY cb.cb_libelle, b.b_libelle");
         $villes = $db->fetchAll('SELECT v_id, v_nom FROM bngrc_ville ORDER BY v_nom');
 
         Flight::render('SaisieBesoin', [
