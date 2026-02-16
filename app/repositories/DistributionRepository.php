@@ -106,4 +106,94 @@ class DistributionRepository {
         $stmt->execute([':distributionId' => $distributionId]);
         return $stmt->fetchAll();
     }
+
+    /**
+     * Récupérer les distributions par ville et par besoin
+     */
+    public function findByVilleEtBesoin(int $villeId, int $besoinId): array {
+        $sql = "SELECT 
+                    dd.dd_id,
+                    dd.dd_quantite,
+                    dd.dd_distribution,
+                    d.d_date,
+                    b.b_libelle AS besoin_libelle,
+                    v.v_nom AS ville_nom
+                FROM bngrc_distributionDetails dd
+                JOIN bngrc_distribution d ON dd.dd_distribution = d.d_id
+                JOIN bngrc_besoin b ON dd.dd_besoin = b.b_id
+                JOIN bngrc_ville v ON dd.dd_ville = v.v_id
+                WHERE dd.dd_ville = :ville_id AND dd.dd_besoin = :besoin_id
+                ORDER BY d.d_date ASC, dd.dd_id ASC";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId, ':besoin_id' => $besoinId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupérer le total distribué par ville et par besoin
+     */
+    public function getTotalDistribueParVilleEtBesoin(int $villeId, int $besoinId): int {
+        $sql = "SELECT COALESCE(SUM(dd.dd_quantite), 0) AS total
+                FROM bngrc_distributionDetails dd
+                WHERE dd.dd_ville = :ville_id AND dd.dd_besoin = :besoin_id";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId, ':besoin_id' => $besoinId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return (int)($result['total'] ?? 0);
+    }
+
+    /**
+     * Insérer un détail de distribution (utilisé par la simulation)
+     */
+    public function insererDistributionDetail(int $distributionId, int $besoinId, int $quantite, int $villeId): int {
+        $sql = "INSERT INTO bngrc_distributionDetails (dd_distribution, dd_besoin, dd_quantite, dd_ville) 
+                VALUES (:distribution_id, :besoin_id, :quantite, :ville_id)";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':distribution_id' => $distributionId,
+            ':besoin_id' => $besoinId,
+            ':quantite' => $quantite,
+            ':ville_id' => $villeId
+        ]);
+        
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Créer une nouvelle distribution et retourner son ID
+     */
+    public function creerDistribution(string $date): int {
+        $sql = "INSERT INTO bngrc_distribution (d_date) VALUES (:d_date)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':d_date' => $date]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Récupérer le résumé des distributions par ville
+     */
+    public function getResumeDistributionsParVille(): array {
+        $sql = "SELECT 
+                    v.v_id AS ville_id,
+                    v.v_nom AS ville_nom,
+                    b.b_id AS besoin_id,
+                    b.b_libelle AS besoin_libelle,
+                    ub.ub_libelle AS unite,
+                    bv.bv_quantite AS quantite_demandee,
+                    COALESCE(SUM(dd.dd_quantite), 0) AS quantite_distribuee,
+                    (bv.bv_quantite - COALESCE(SUM(dd.dd_quantite), 0)) AS reste
+                FROM bngrc_besoinVille bv
+                JOIN bngrc_ville v ON bv.bv_ville = v.v_id
+                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
+                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+                LEFT JOIN bngrc_distributionDetails dd ON dd.dd_besoin = bv.bv_besoin AND dd.dd_ville = bv.bv_ville
+                GROUP BY v.v_id, v.v_nom, b.b_id, b.b_libelle, ub.ub_libelle, bv.bv_quantite
+                ORDER BY v.v_nom, b.b_libelle";
+        
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
