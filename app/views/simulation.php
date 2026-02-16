@@ -1,4 +1,10 @@
 <?php $pageTitle = "Simulation de Dons"; ?>
+<?php
+    $breadcrumbs = [
+        ['label' => 'Accueil', 'url' => '/'],
+        ['label' => 'Simulation de Dons']
+    ];
+?>
 <?php include ("inc/header.php"); ?>
 
 <main class="main-content">
@@ -7,12 +13,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-light mb-2">
-                            <li class="breadcrumb-item"><a href="/">Tableau de bord</a></li>
-                            <li class="breadcrumb-item active">Simulation de Dons</li>
-                        </ol>
-                    </nav>
+                    <?php if (file_exists(__DIR__ . '/inc/breadcrumb.php')) include('inc/breadcrumb.php'); ?>
                     <h1 class="hero-title mb-3">
                         <i class="bi bi-arrow-repeat me-2"></i>Simulation de Dispatch
                     </h1>
