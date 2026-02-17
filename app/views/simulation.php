@@ -22,11 +22,9 @@
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <form action="/simulation/executer" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-light btn-lg ">
-                            <i class="bi bi-play-fill me-1"></i>Lancer la simulation
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#modalTypeSimulation">
+                        <i class="bi bi-play-fill me-1"></i>Lancer la simulation
+                    </button>
                 </div>
             </div>
         </div>
@@ -111,6 +109,7 @@
                     <strong>Aperçu de la simulation</strong> — Ces données ne sont pas encore enregistrées. Cliquez sur <strong>Valider</strong> pour enregistrer.
                 </div>
                 <form action="/simulation/valider" method="POST" class="d-inline ms-3">
+                    <input type="hidden" name="type_simulation" value="<?= $type_simulation ?? 1 ?>">
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-lg me-1"></i>Valider et enregistrer
                     </button>
@@ -137,6 +136,14 @@
                         </div>
                         <span class="badge bg-warning text-dark px-3 py-2">
                             <i class="bi bi-eye me-1"></i>Aperçu
+                            <?php
+                                $typeLabel = match($type_simulation ?? 1) {
+                                    2 => '(Par quantité)',
+                                    3 => '(Proportionnel)',
+                                    default => '(Par date)'
+                                };
+                                echo $typeLabel;
+                            ?>
                         </span>
                     </div>
                     <div class="card-body p-0">
@@ -348,7 +355,7 @@
                     Lancez une simulation pour distribuer automatiquement les collectes vers les villes.
                 </p>
                 <form action="/simulation/executer" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-primary btn-lg">
+                    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalTypeSimulation">
                         <i class="bi bi-play-fill me-2"></i>Lancer la simulation
                     </button>
                 </form>
@@ -357,6 +364,101 @@
         <?php endif; ?>
     </div>
 </main>
+
+<!-- Modal Choix du type de simulation -->
+<div class="modal fade" id="modalTypeSimulation" tabindex="-1" aria-labelledby="modalTypeSimulationLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h4 class="modal-title" id="modalTypeSimulationLabel">
+                    <i class="bi bi-sliders me-2"></i>Choisir le type de simulation
+                </h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-muted mb-4">Sélectionnez l'algorithme de distribution à utiliser pour la simulation.</p>
+                <form action="/simulation/executer" method="POST" id="formSimulation">
+                    <div class="row g-3">
+                        <!-- Type 1 : Par date -->
+                        <div class="col-12">
+                            <label class="simulation-type-card w-100" for="type_sim_1">
+                                <input type="radio" name="type_simulation" value="1" id="type_sim_1" class="d-none" checked>
+                                <div class="card border-2 h-100 simulation-card">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="sim-type-icon bg-primary-subtle text-primary me-3">
+                                            <i class="bi bi-calendar-date fs-4"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">Type 1 — Par date de demande</h6>
+                                            <small class="text-muted">
+                                                Priorise les demandes les plus anciennes
+                                            </small>
+                                        </div>
+                                        <div class="sim-check ms-2">
+                                            <i class="bi bi-check-circle-fill fs-4"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- Type 2 : Par ordre de quantité -->
+                        <div class="col-12">
+                            <label class="simulation-type-card w-100" for="type_sim_2">
+                                <input type="radio" name="type_simulation" value="2" id="type_sim_2" class="d-none">
+                                <div class="card border-2 h-100 simulation-card">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="sim-type-icon bg-warning-subtle text-warning me-3">
+                                            <i class="bi bi-sort-numeric-up fs-4"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">Type 2 — Par ordre de quantité</h6>
+                                            <small class="text-muted">
+                                                Priorise les plus petites quantités d'abord.
+                                            </small>
+                                        </div>
+                                        <div class="sim-check ms-2">
+                                            <i class="bi bi-check-circle-fill fs-4"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- Type 3 : Proportionnel -->
+                        <div class="col-12">
+                            <label class="simulation-type-card w-100" for="type_sim_3">
+                                <input type="radio" name="type_simulation" value="3" id="type_sim_3" class="d-none">
+                                <div class="card border-2 h-100 simulation-card">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="sim-type-icon bg-success-subtle text-success me-3">
+                                            <i class="bi bi-pie-chart fs-4"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">Type 3 — Proportionnel</h6>
+                                            <small class="text-muted">
+                                                Chaque ville reçoit une part proportionnelle à ses besoins restants
+                                            </small>
+                                        </div>
+                                        <div class="sim-check ms-2">
+                                            <i class="bi bi-check-circle-fill fs-4"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>Annuler
+                </button>
+                <button type="submit" form="formSimulation" class="btn btn-primary btn-lg">
+                    <i class="bi bi-play-fill me-1"></i>Lancer la simulation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 .besoin-icon {
@@ -373,6 +475,38 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+/* Modal simulation type cards */
+.simulation-type-card .simulation-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-color: #dee2e6 !important;
+}
+.simulation-type-card .simulation-card:hover {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 0.15rem rgba(var(--bs-primary-rgb), 0.15);
+}
+.simulation-type-card input:checked ~ .simulation-card {
+    border-color: var(--bs-primary) !important;
+    background-color: rgba(var(--bs-primary-rgb), 0.04);
+    box-shadow: 0 0 0 0.15rem rgba(var(--bs-primary-rgb), 0.2);
+}
+.simulation-type-card .sim-check {
+    color: #dee2e6;
+    transition: color 0.2s;
+}
+.simulation-type-card input:checked ~ .simulation-card .sim-check {
+    color: var(--bs-primary);
+}
+.sim-type-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 </style>
 

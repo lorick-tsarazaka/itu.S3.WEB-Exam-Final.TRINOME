@@ -32,13 +32,26 @@ class SimulationController {
 
     /**
      * Simuler le dispatch (aperçu sans insertion en base)
+     * Accepte le type de simulation : 1=par date, 2=par ordre de quantité, 3=proportionnel
      */
     public function executer() {
         $db = Flight::db();
         $service = new SimulationDonService($db);
 
-        // Simuler SANS enregistrer en base
-        $result = $service->simulerSansEnregistrer();
+        $typeSimulation = (int)(Flight::request()->data->type_simulation ?? 1);
+
+        // Simuler SANS enregistrer en base selon le type choisi
+        switch ($typeSimulation) {
+            case 2:
+                $result = $service->simulerParOrdreQuantite();
+                break;
+            case 3:
+                $result = $service->simulerProportionnel();
+                break;
+            default:
+                $result = $service->simulerSansEnregistrer();
+                break;
+        }
 
         // Grouper par ville pour l'affichage
         $simulationParVille = $service->grouperSimulationParVille($result);
@@ -51,19 +64,23 @@ class SimulationController {
             'simulationParVille' => $simulationParVille,
             'statistiques' => $statistiques,
             'simulation_result' => $result,
-            'mode_apercu' => true
+            'mode_apercu' => true,
+            'type_simulation' => $typeSimulation
         ]);
     }
 
     /**
      * Valider et enregistrer la simulation en base
+     * Accepte le type de simulation pour utiliser le même algorithme que l'aperçu
      */
     public function valider() {
         $db = Flight::db();
         $service = new SimulationDonService($db);
 
-        // Exécuter et ENREGISTRER en base
-        $result = $service->simulerDispatch();
+        $typeSimulation = (int)(Flight::request()->data->type_simulation ?? 1);
+
+        // Exécuter et ENREGISTRER en base avec le même type que l'aperçu
+        $result = $service->simulerDispatch(null, $typeSimulation);
 
         // Récupérer les données mises à jour
         $distributionsParVille = $service->getDistributionsGroupeesParVille();
@@ -73,7 +90,8 @@ class SimulationController {
             'csp_nonce' => Flight::get('csp_nonce'),
             'distributionsParVille' => $distributionsParVille,
             'statistiques' => $statistiques,
-            'validation_result' => $result
+            'validation_result' => $result,
+            'type_simulation' => $typeSimulation
         ]);
     }
 }
