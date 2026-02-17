@@ -136,3 +136,6 @@ INSERT INTO bngrc_distributionDetails (dd_id, dd_distribution, dd_besoin, dd_qua
 (4, 2, 5, 80, 10);
 
 -- Small note: adjust quantities/prices as needed for testing scenarios.
+
+/*ALTER TABLE bngrc_distributionDetails 
+MODIFY dd_collecteDetails INT NULL;*/

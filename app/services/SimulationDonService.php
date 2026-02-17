@@ -126,99 +126,154 @@ class SimulationDonService {
     }
 
     /**
-     * Simuler le dispatch de dons et ENREGISTRER en base (appelé après validation)
+     * Valider et enregistrer en base : utilise simulerSansEnregistrer() 
+     * pour garantir que seules les distributions de l'aperçu sont insérées.
      */
     public function simulerDispatch(?string $date = null): array {
         $date = $date ?? date('Y-m-d');
-        $resultat = [
-            'date' => $date,
-            'distributions' => [],
-            'total_distribue' => 0,
-            'villes_traitees' => 0,
-            'besoins_satisfaits' => 0
-        ];
+
+        // Récupérer exactement le même résultat que l'aperçu
+        $apercu = $this->simulerSansEnregistrer();
+
+        if (empty($apercu['distributions'])) {
+            return [
+                'date' => $date,
+                'distributions' => [],
+                'total_distribue' => 0,
+                'villes_traitees' => 0,
+                'besoins_satisfaits' => 0,
+                'success' => true
+            ];
+        }
 
         try {
             $this->pdo->beginTransaction();
 
-            // Créer une nouvelle distribution pour cette simulation (utilise la méthode générique du repo)
+            // Créer une nouvelle distribution
             $distributionId = $this->distributionRepo->creerDistribution($date);
 
-            // Récupérer toutes les villes
-            $villes = $this->villeRepo->findAll();
+            // Insérer UNIQUEMENT les distributions calculées par l'aperçu
+            foreach ($apercu['distributions'] as $dist) {
+                $this->distributionRepo->insererDistributionDetail(
+                    $distributionId,
+                    (int)$dist['besoin_id'],
+                    (int)$dist['quantite_distribuee'],
+                    (int)$dist['ville_id']
+                );
+            }
 
-            // Calculer le stock disponible par besoin (total collecté - total distribué)
-            $stockParBesoin = $this->calculerStockDisponible();
+            $this->pdo->commit();
 
-            foreach ($villes as $ville) {
-                $villeId = (int)$ville['v_id'];
-                $villeNom = $ville['v_nom'];
+            $apercu['distribution_id'] = $distributionId;
+            $apercu['date'] = $date;
+            $apercu['success'] = true;
 
-                // Récupérer les besoins non satisfaits de cette ville (priorisé par date_demande)
-                $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVilleOrdreDate($villeId);
+            return $apercu;
 
-                foreach ($besoinsNonSatisfaits as $besoin) {
-                    $besoinId = (int)$besoin['besoin_id'];
-                    $besoinLibelle = $besoin['besoin_libelle'];
-                    $unite = $besoin['unite'];
-                    $quantiteDemandee = (int)$besoin['quantite_demandee'];
-                    $quantiteDistribuee = (int)$besoin['quantite_distribuee'];
-                    $resteADistribuer = $quantiteDemandee - $quantiteDistribuee;
+        } catch (\Exception $e) {
+            $this->pdo->rollBack();
+            return [
+                'date' => $date,
+                'distributions' => [],
+                'total_distribue' => 0,
+                'villes_traitees' => 0,
+                'besoins_satisfaits' => 0,
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 
-                    if ($resteADistribuer <= 0) {
+    /**
+     * Simulation de distribution par ordre de quantité (du plus petit au plus grand)
+     * 1. Récupérer la liste des villes
+     * 2. Récupérer les besoins (group by besoin) d'une ville
+     * 3. Récupérer la liste des besoins par ville et par besoin ordonnés par quantité
+     * 4. Simuler la distribution sans sauvegarder en considérant les besoins déjà distribués
+     */
+    public function simulerParOrdreQuantite(): array {
+        $resultat = [
+            'date' => date('Y-m-d'),
+            'distributions' => [],
+            'total_distribue' => 0,
+            'villes_traitees' => 0,
+            'besoins_satisfaits' => 0,
+            'success' => true
+        ];
+
+        // 1. Récupérer la liste des villes
+        $villes = $this->villeRepo->findAll();
+        $stockParBesoin = $this->calculerStockDisponible();
+
+        foreach ($villes as $ville) {
+            $villeId = (int)$ville['v_id'];
+            $villeNom = $ville['v_nom'];
+
+            // 2. Récupérer les besoins groupés par besoin pour cette ville
+            $besoinsGroupes = $this->besoinRepo->findBesoinsParVilleGroupByBesoin($villeId);
+
+            foreach ($besoinsGroupes as $besoinGroupe) {
+                $besoinId = (int)$besoinGroupe['besoin_id'];
+                $totalDemande = (int)$besoinGroupe['quantite_demandee'];
+                $totalDistribue = (int)$besoinGroupe['quantite_distribuee'];
+                $resteGlobal = $totalDemande - $totalDistribue;
+
+                if ($resteGlobal <= 0) continue;
+
+                $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
+                if ($stockDisponible <= 0) continue;
+
+                // 3. Récupérer la liste des besoins par ville et par besoin ordonnés par quantité (plus petit d'abord)
+                $besoinsIndividuels = $this->besoinRepo->findBesoinsParVilleEtBesoinOrdreQuantite($villeId, $besoinId);
+
+                // Distribuer en tenant compte des besoins déjà distribués
+                $dejaDistribueRestant = $totalDistribue;
+
+                foreach ($besoinsIndividuels as $besoinIndiv) {
+                    $quantiteEntree = (int)$besoinIndiv['quantite_demandee'];
+
+                    // Soustraire le déjà distribué des entrées les plus petites d'abord
+                    if ($dejaDistribueRestant >= $quantiteEntree) {
+                        $dejaDistribueRestant -= $quantiteEntree;
                         continue;
                     }
 
-                    // Vérifier le stock disponible pour ce besoin
+                    $resteEntree = $quantiteEntree - $dejaDistribueRestant;
+                    $dejaDistribueRestant = 0;
+
+                    if ($resteEntree <= 0) continue;
+
                     $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
+                    if ($stockDisponible <= 0) break;
 
-                    if ($stockDisponible <= 0) {
-                        continue;
-                    }
-
-                    // Calculer la quantité à distribuer (min entre reste et stock)
-                    $quantiteADistribuer = min($resteADistribuer, $stockDisponible);
+                    $quantiteADistribuer = min($resteEntree, $stockDisponible);
 
                     if ($quantiteADistribuer > 0) {
-                        // Insérer le détail de distribution via le repository
-                        $this->distributionRepo->insererDistributionDetail($distributionId, $besoinId, $quantiteADistribuer, $villeId);
-
-                        // Mettre à jour le stock disponible
                         $stockParBesoin[$besoinId] -= $quantiteADistribuer;
 
-                        // Enregistrer dans le résultat
                         $resultat['distributions'][] = [
                             'ville_id' => $villeId,
                             'ville_nom' => $villeNom,
                             'besoin_id' => $besoinId,
-                            'date_demande' => $besoin['date_demande'] ?? null,
-                            'besoin_libelle' => $besoinLibelle,
-                            'unite' => $unite,
-                            'quantite_demandee' => $quantiteDemandee,
-                            'deja_distribue' => $quantiteDistribuee,
+                            'bv_id' => $besoinIndiv['bv_id'],
+                            'date_demande' => $besoinIndiv['date_demande'] ?? null,
+                            'besoin_libelle' => $besoinIndiv['besoin_libelle'],
+                            'unite' => $besoinIndiv['unite'],
+                            'quantite_demandee' => $quantiteEntree,
+                            'deja_distribue' => $quantiteEntree - $resteEntree,
                             'quantite_distribuee' => $quantiteADistribuer,
-                            'reste_apres' => $resteADistribuer - $quantiteADistribuer
+                            'reste_apres' => $resteEntree - $quantiteADistribuer
                         ];
 
                         $resultat['total_distribue'] += $quantiteADistribuer;
-
-                        if ($resteADistribuer - $quantiteADistribuer == 0) {
+                        if ($resteEntree - $quantiteADistribuer == 0) {
                             $resultat['besoins_satisfaits']++;
                         }
                     }
                 }
-
-                $resultat['villes_traitees']++;
             }
 
-            $this->pdo->commit();
-            $resultat['distribution_id'] = $distributionId;
-            $resultat['success'] = true;
-
-        } catch (\Exception $e) {
-            $this->pdo->rollBack();
-            $resultat['success'] = false;
-            $resultat['error'] = $e->getMessage();
+            $resultat['villes_traitees']++;
         }
 
         return $resultat;
@@ -291,6 +346,7 @@ class SimulationDonService {
 
             $parVille[$villeId]['besoins'][] = [
                 'besoin_id' => $row['besoin_id'],
+                'date_demande' => $row['date_demande'] ?? null,
                 'besoin_libelle' => $row['besoin_libelle'],
                 'unite' => $row['unite'],
                 'quantite_demandee' => (int)$row['quantite_demandee'],
