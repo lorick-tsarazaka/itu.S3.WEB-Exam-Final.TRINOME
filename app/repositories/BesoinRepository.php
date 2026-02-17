@@ -211,6 +211,60 @@ class BesoinRepository {
     }
 
     /**
+     * Récupérer les besoins d'une ville groupés par besoin
+     * Agrège les quantités demandées et distribuées par type de besoin
+     */
+    public function findBesoinsParVilleGroupByBesoin(int $villeId): array {
+        $sql = "SELECT 
+                    b.b_id AS besoin_id,
+                    b.b_libelle AS besoin_libelle,
+                    ub.ub_libelle AS unite,
+                    SUM(bv.bv_quantite) AS quantite_demandee,
+                    COALESCE(
+                        (SELECT SUM(dd.dd_quantite) 
+                         FROM bngrc_distributionDetails dd 
+                         WHERE dd.dd_besoin = b.b_id AND dd.dd_ville = :ville_id2), 
+                        0
+                    ) AS quantite_distribuee
+                FROM bngrc_besoinVille bv
+                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
+                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+                WHERE bv.bv_ville = :ville_id
+                GROUP BY b.b_id, b.b_libelle, ub.ub_libelle
+                ORDER BY b.b_libelle";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId, ':ville_id2' => $villeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupérer la liste des besoins par ville et par besoin
+     * Ordonnés par quantité demandée (du plus petit au plus grand)
+     */
+    public function findBesoinsParVilleEtBesoinOrdreQuantite(int $villeId, int $besoinId): array {
+        $sql = "SELECT 
+                    bv.bv_id,
+                    bv.bv_besoin AS besoin_id,
+                    bv.bv_date_demande AS date_demande,
+                    bv.bv_quantite AS quantite_demandee,
+                    bv.bv_ville AS ville_id,
+                    v.v_nom AS ville_nom,
+                    b.b_libelle AS besoin_libelle,
+                    ub.ub_libelle AS unite
+                FROM bngrc_besoinVille bv
+                JOIN bngrc_ville v ON bv.bv_ville = v.v_id
+                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
+                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+                WHERE bv.bv_ville = :ville_id AND bv.bv_besoin = :besoin_id
+                ORDER BY bv.bv_quantite ASC, bv.bv_id ASC";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId, ':besoin_id' => $besoinId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Insert a single besoin
      */
     public function insertBesoinVille(int $besoinId, int $villeId, int $quantite, ?string $date = null)
