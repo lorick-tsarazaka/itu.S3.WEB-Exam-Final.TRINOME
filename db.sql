@@ -122,3 +122,6 @@ create table bngrc_distributionDetails (
   foreign key (dd_ville) references bngrc_ville(v_id),
   foreign key (dd_collecteDetails) references bngrc_collecteDetails(cd_id)
 );
+
+
+ALTER TABLE bngrc_distributionDetails MODIFY dd_collecteDetails INT NULL;
