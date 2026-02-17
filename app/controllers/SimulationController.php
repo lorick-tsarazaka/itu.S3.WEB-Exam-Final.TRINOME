@@ -37,13 +37,14 @@ class SimulationController {
         $db = Flight::db();
         $service = new SimulationDonService($db);
 
-        // Simuler SANS enregistrer en base
+        // Simulation sans enregistrement
         $result = $service->simulerSansEnregistrer();
 
-        // Grouper par ville pour l'affichage
+        // Grouper pour affichage
         $simulationParVille = $service->grouperSimulationParVille($result);
 
-        $statistiques = $service->getStatistiquesGlobales();
+        // Calculer les stats depuis la simulation
+        $statistiques = $service->calculerStatistiquesDepuisSimulation($simulationParVille);
 
         Flight::render('simulation', [
             'csp_nonce' => Flight::get('csp_nonce'),
@@ -62,10 +63,8 @@ class SimulationController {
         $db = Flight::db();
         $service = new SimulationDonService($db);
 
-        // Exécuter et ENREGISTRER en base
         $result = $service->simulerDispatch();
 
-        // Récupérer les données mises à jour
         $distributionsParVille = $service->getDistributionsGroupeesParVille();
         $statistiques = $service->getStatistiquesGlobales();
 
@@ -76,4 +75,5 @@ class SimulationController {
             'validation_result' => $result
         ]);
     }
+
 }

@@ -36,7 +36,6 @@ class SimulationDonService {
         $resultat = [
             'date' => date('Y-m-d'),
             'distributions' => [],
-            'total_distribue' => 0,
             'success' => true
         ];
 
@@ -50,10 +49,13 @@ class SimulationDonService {
             foreach ($besoins as $besoin) {
 
                 $besoinId = (int)$besoin['besoin_id'];
-                $reste = (int)$besoin['quantite_demandee']
-                    - (int)$besoin['quantite_distribuee'];
+                $demande = (int)$besoin['quantite_demandee'];
+                $dejaDistribue = (int)$besoin['quantite_distribuee'];
 
+                $reste = $demande - $dejaDistribue;
                 if ($reste <= 0) continue;
+
+                $quantiteDistribueeSimulation = 0;
 
                 $collectes = $this->collecteRepo
                     ->getCollectesDisponiblesParBesoin($besoinId);
@@ -63,24 +65,24 @@ class SimulationDonService {
                     if ($reste <= 0) break;
 
                     $stockDisponible = (int)$collecte['stock_disponible'];
-
                     if ($stockDisponible <= 0) continue;
 
                     $aDistribuer = min($reste, $stockDisponible);
 
-                    $resultat['distributions'][] = [
-                        'ville_id' => $villeId,
-                        'ville_nom' => $ville['v_nom'],
-                        'besoin_id' => $besoinId,
-                        'besoin_libelle' => $besoin['besoin_libelle'],
-                        'quantite' => $aDistribuer,
-                        'collecte_id' => $collecte['cd_id'],
-                        'collecte_date' => $collecte['c_date']
-                    ];
-
+                    $quantiteDistribueeSimulation += $aDistribuer;
                     $reste -= $aDistribuer;
-                    $resultat['total_distribue'] += $aDistribuer;
                 }
+
+                $resultat['distributions'][] = [
+                    'ville_id' => $villeId,
+                    'ville_nom' => $ville['v_nom'],
+                    'besoin_id' => $besoinId,
+                    'besoin_libelle' => $besoin['besoin_libelle'],
+                    'unite' => $besoin['unite'],
+                    'quantite_demandee' => $demande,
+                    'quantite_distribuee' => $dejaDistribue + $quantiteDistribueeSimulation,
+                    'reste_apres' => $reste
+                ];
             }
         }
 
@@ -88,13 +90,18 @@ class SimulationDonService {
     }
 
 
+
     /**
      * Grouper les résultats de simulation par ville pour l'affichage
      */
     public function grouperSimulationParVille(array $simulationResult): array {
+
         $parVille = [];
+
         foreach ($simulationResult['distributions'] as $dist) {
+
             $villeId = $dist['ville_id'];
+
             if (!isset($parVille[$villeId])) {
                 $parVille[$villeId] = [
                     'ville_id' => $villeId,
@@ -105,6 +112,7 @@ class SimulationDonService {
                     'total_reste' => 0
                 ];
             }
+
             $parVille[$villeId]['besoins'][] = [
                 'besoin_id' => $dist['besoin_id'],
                 'besoin_libelle' => $dist['besoin_libelle'],
@@ -113,12 +121,15 @@ class SimulationDonService {
                 'quantite_distribuee' => $dist['quantite_distribuee'],
                 'reste' => $dist['reste_apres']
             ];
+
             $parVille[$villeId]['total_demande'] += $dist['quantite_demandee'];
             $parVille[$villeId]['total_distribue'] += $dist['quantite_distribuee'];
             $parVille[$villeId]['total_reste'] += $dist['reste_apres'];
         }
+
         return array_values($parVille);
     }
+
 
     /**
      * Simuler le dispatch de dons et ENREGISTRER en base (appelé après validation)
@@ -308,4 +319,49 @@ class SimulationDonService {
 
         return $stats;
     }
+
+    public function calculerStatistiquesDepuisSimulation(array $simulationParVille): array {
+
+        $stats = [
+            'total_besoins' => 0,
+            'total_demande' => 0,
+            'total_distribue' => 0,
+            'total_reste' => 0,
+            'besoins_satisfaits' => 0,
+            'besoins_partiels' => 0,
+            'besoins_non_traites' => 0
+        ];
+
+        foreach ($simulationParVille as $ville) {
+
+            foreach ($ville['besoins'] as $besoin) {
+
+                $stats['total_besoins']++;
+
+                $demande = (int)$besoin['quantite_demandee'];
+                $distribue = (int)$besoin['quantite_distribuee'];
+                $reste = (int)$besoin['reste'];
+
+                $stats['total_demande'] += $demande;
+                $stats['total_distribue'] += $distribue;
+                $stats['total_reste'] += $reste;
+
+                if ($reste == 0) {
+                    $stats['besoins_satisfaits']++;
+                } elseif ($distribue > 0) {
+                    $stats['besoins_partiels']++;
+                } else {
+                    $stats['besoins_non_traites']++;
+                }
+            }
+        }
+
+        $stats['pourcentage_satisfaction'] =
+            $stats['total_demande'] > 0
+            ? round(($stats['total_distribue'] / $stats['total_demande']) * 100, 2)
+            : 0;
+
+        return $stats;
+    }
+
 }
