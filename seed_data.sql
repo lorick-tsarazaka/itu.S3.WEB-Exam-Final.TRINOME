@@ -89,27 +89,27 @@ INSERT INTO bngrc_statusBesoinVille (sbv_id, sbv_libelle) VALUES
 (3, 'couvert');
 
 -- Initial stock needs per city (besoinVille)
-INSERT INTO bngrc_besoinVille (bv_id, bv_besoin, bv_quantite, bv_ville, bv_status) VALUES
-(1, 1, 5000, 1, 2), -- Antananarivo: partiel
-(2, 2, 2000, 1, 2), -- partiel
-(3, 3, 800, 1, 2),
-(4, 4, 150, 1, 2),
-(5, 5, 300, 1, 2),
-(6, 6, 400, 1, 2),
-(7, 7, 100, 1, 2),
-(8, 8, 200, 1, 2),
-(9, 9, 250, 1, 2),
-(10,10, 500, 1, 2),
-(11, 1, 2000, 4, 1), -- Toamasina (cyclone): attendu
-(12, 2, 800, 4, 1),
-(13, 3, 300, 4, 1),
-(14, 4, 100, 4, 1),
-(15, 5, 120, 4, 1),
-(16, 6, 150, 4, 1),
-(17, 1, 1200, 10, 2), -- Farafangana: partiel
-(18, 2, 600, 10, 2),
-(19, 5, 80, 3, 1), -- Fianarantsoa: attendu
-(20, 1, 700, 3, 1);
+INSERT INTO bngrc_besoinVille (bv_id, bv_besoin, bv_quantite, bv_date_demande, bv_ville, bv_status) VALUES
+(1, 1, 5000, '2025-02-01', 1, 2), -- Antananarivo: partiel
+(2, 2, 2000, '2025-02-01', 1, 2), -- partiel
+(3, 3, 800,  '2025-02-01', 1, 2),
+(4, 4, 150,  '2025-02-01', 1, 2),
+(5, 5, 300,  '2025-02-01', 1, 2),
+(6, 6, 400,  '2025-02-01', 1, 2),
+(7, 7, 100,  '2025-02-01', 1, 2),
+(8, 8, 200,  '2025-02-01', 1, 2),
+(9, 9, 250,  '2025-02-01', 1, 2),
+(10,10, 500, '2025-02-01', 1, 2),
+(11, 1, 2000, '2025-02-01', 4, 1), -- Toamasina (cyclone): attendu
+(12, 2, 800,  '2025-02-01', 4, 1),
+(13, 3, 300,  '2025-02-01', 4, 1),
+(14, 4, 100,  '2025-02-01', 4, 1),
+(15, 5, 120,  '2025-02-01', 4, 1),
+(16, 6, 150,  '2025-02-01', 4, 1),
+(17, 1, 1200, '2025-02-01', 10, 2), -- Farafangana: partiel
+(18, 2, 600,  '2025-02-01', 10, 2),
+(19, 5, 80,   '2025-02-01', 3, 1), -- Fianarantsoa: attendu
+(20, 1, 700,  '2025-02-01', 3, 1);
 
 -- Exemple de collectes
 INSERT INTO bngrc_collecte (c_id, c_date) VALUES

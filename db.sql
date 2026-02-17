@@ -79,6 +79,7 @@ create table bngrc_besoinVille (
   bv_id int primary key auto_increment,
   bv_besoin int not null,
   bv_quantite int not null,
+  bv_date_demande date not null default CURRENT_DATE,
   bv_ville int not null,
   bv_status int not null,
   foreign key (bv_besoin) references bngrc_besoin(b_id),

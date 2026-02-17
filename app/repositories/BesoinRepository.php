@@ -16,6 +16,7 @@ class BesoinRepository {
     public function findByVille($id_ville) {
         $st = $this->pdo->prepare("SELECT 
                     v.v_nom AS ville,
+                    bv.bv_date_demande AS date_demande,
                     b.b_libelle AS besoin,
                     cb.cb_libelle AS categorie,
                     ub.ub_libelle AS unite,
@@ -39,6 +40,7 @@ class BesoinRepository {
         $sql = "SELECT 
                     bv.bv_id,
                     bv.bv_besoin AS besoin_id,
+                    bv.bv_date_demande AS date_demande,
                     bv.bv_quantite AS quantite_demandee,
                     bv.bv_ville AS ville_id,
                     v.v_nom AS ville_nom,
@@ -56,6 +58,37 @@ class BesoinRepository {
                 HAVING quantite_distribuee < bv.bv_quantite
                 ORDER BY b.b_libelle";
         
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ville_id' => $villeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupérer les besoins pas encore satisfaits dans une ville
+     * Ordonnés par date de demande (anciennes demandes d'abord) puis par id
+     */
+    public function findBesoinsNonSatisfaitsParVilleOrdreDate(int $villeId): array {
+        $sql = "SELECT 
+                    bv.bv_id,
+                    bv.bv_besoin AS besoin_id,
+                    bv.bv_date_demande AS date_demande,
+                    bv.bv_quantite AS quantite_demandee,
+                    bv.bv_ville AS ville_id,
+                    v.v_nom AS ville_nom,
+                    b.b_libelle AS besoin_libelle,
+                    b.b_prixUnitraire AS prix_unitaire,
+                    ub.ub_libelle AS unite,
+                    COALESCE(SUM(dd.dd_quantite), 0) AS quantite_distribuee
+                FROM bngrc_besoinVille bv
+                JOIN bngrc_ville v ON bv.bv_ville = v.v_id
+                JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
+                JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
+                LEFT JOIN bngrc_distributionDetails dd ON dd.dd_besoin = bv.bv_besoin AND dd.dd_ville = bv.bv_ville
+                WHERE bv.bv_ville = :ville_id
+                GROUP BY bv.bv_id, bv.bv_besoin, bv.bv_quantite, bv.bv_ville, v.v_nom, b.b_libelle, b.b_prixUnitraire, ub.ub_libelle, bv.bv_date_demande
+                HAVING quantite_distribuee < bv.bv_quantite
+                ORDER BY bv.bv_date_demande ASC, bv.bv_id ASC";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':ville_id' => $villeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,6 +126,7 @@ class BesoinRepository {
         $sql = "SELECT 
                     bv.bv_id,
                     bv.bv_besoin AS besoin_id,
+                    bv.bv_date_demande AS date_demande,
                     bv.bv_quantite AS quantite_demandee,
                     bv.bv_ville AS ville_id,
                     v.v_nom AS ville_nom,
@@ -152,6 +186,7 @@ class BesoinRepository {
         $sql = "SELECT 
                     bv.bv_id,
                     bv.bv_besoin AS besoin_id,
+                    bv.bv_date_demande AS date_demande,
                     bv.bv_quantite AS quantite_demandee,
                     bv.bv_ville AS ville_id,
                     v.v_nom AS ville_nom,
@@ -178,13 +213,14 @@ class BesoinRepository {
     /**
      * Insert a single besoin
      */
-    public function insertBesoinVille(int $besoinId, int $villeId, int $quantite)
+    public function insertBesoinVille(int $besoinId, int $villeId, int $quantite, ?string $date = null)
     {
         $db = $this->pdo;
+        $dateToInsert = $date ?? date('Y-m-d');
         try {
             $stmt = $db->runQuery(
-                'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville, bv_status) VALUES (?, ?, ?, ?)',
-                [ $besoinId, $quantite, $villeId, 1 ]
+                'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_date_demande, bv_ville, bv_status) VALUES (?, ?, ?, ?, ?)',
+                [ $besoinId, $quantite, $dateToInsert, $villeId, 1 ]
             );
             return (int)$db->lastInsertId();
         } catch (PDOException $e) {
@@ -204,12 +240,14 @@ class BesoinRepository {
             foreach ($besoins as $b) {
                 $besoinId = (int)($b['besoin'] ?? 0);
                 $quantite = (int)($b['quantite'] ?? 0);
+                $date = $b['date'] ?? null;
+                $dateToInsert = $date ?? date('Y-m-d');
                 if ($besoinId <= 0) {
                     continue;
                 }
                 $db->runQuery(
-                    'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_ville, bv_status) VALUES (?, ?, ?, ?)',
-                    [ $besoinId, $quantite, $villeId, 1 ]
+                    'INSERT INTO bngrc_besoinVille (bv_besoin, bv_quantite, bv_date_demande, bv_ville, bv_status) VALUES (?, ?, ?, ?, ?)',
+                    [ $besoinId, $quantite, $dateToInsert, $villeId, 1 ]
                 );
                 $inserted[] = (int)$db->lastInsertId();
             }
