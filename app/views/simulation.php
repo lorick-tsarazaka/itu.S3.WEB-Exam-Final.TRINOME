@@ -145,6 +145,7 @@
                                 <thead>
                                     <tr>
                                         <th>Besoin</th>
+                                        <th>Date demande</th>
                                         <th class="text-center">Demandé</th>
                                         <th class="text-center">Distribué</th>
                                         <th class="text-center">Reste</th>
@@ -163,6 +164,11 @@
                                                     <small class="d-block text-muted"><?= htmlspecialchars($besoin['unite']) ?></small>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                <?= !empty($besoin['date_demande']) ? htmlspecialchars(date('d/m/Y', strtotime($besoin['date_demande']))) : '-' ?>
+                                            </small>
                                         </td>
                                         <td class="text-center"><span class="fw-semibold"><?= number_format($besoin['quantite_demandee']) ?></span></td>
                                         <td class="text-center"><span class="text-success fw-semibold"><?= number_format($besoin['quantite_distribuee']) ?></span></td>
@@ -247,6 +253,7 @@
                                 <thead>
                                     <tr>
                                         <th>Besoin</th>
+                                        <th>Date demande</th>
                                         <th class="text-center">Demandé</th>
                                         <th class="text-center">Distribué</th>
                                         <th class="text-center">Reste</th>
@@ -272,6 +279,11 @@
                                                     <small class="d-block text-muted"><?= htmlspecialchars($besoin['unite']) ?></small>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                <?= !empty($besoin['date_demande']) ? htmlspecialchars(date('d/m/Y', strtotime($besoin['date_demande']))) : '-' ?>
+                                            </small>
                                         </td>
                                         <td class="text-center">
                                             <span class="fw-semibold"><?= number_format($besoin['quantite_demandee']) ?></span>
