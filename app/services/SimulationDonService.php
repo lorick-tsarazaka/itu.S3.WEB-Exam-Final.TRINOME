@@ -32,63 +32,61 @@ class SimulationDonService {
      * Retourne un aperçu des distributions qui seraient effectuées
      */
     public function simulerSansEnregistrer(): array {
+
         $resultat = [
             'date' => date('Y-m-d'),
             'distributions' => [],
             'total_distribue' => 0,
-            'villes_traitees' => 0,
-            'besoins_satisfaits' => 0,
             'success' => true
         ];
 
         $villes = $this->villeRepo->findAll();
-        $stockParBesoin = $this->calculerStockDisponible();
 
         foreach ($villes as $ville) {
+
             $villeId = (int)$ville['v_id'];
-            $villeNom = $ville['v_nom'];
+            $besoins = $this->besoinRepo->findBesoinsNonSatisfaitsParVille($villeId);
 
-            $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVille($villeId);
+            foreach ($besoins as $besoin) {
 
-            foreach ($besoinsNonSatisfaits as $besoin) {
                 $besoinId = (int)$besoin['besoin_id'];
-                $quantiteDemandee = (int)$besoin['quantite_demandee'];
-                $quantiteDistribuee = (int)$besoin['quantite_distribuee'];
-                $resteADistribuer = $quantiteDemandee - $quantiteDistribuee;
+                $reste = (int)$besoin['quantite_demandee']
+                    - (int)$besoin['quantite_distribuee'];
 
-                if ($resteADistribuer <= 0) continue;
+                if ($reste <= 0) continue;
 
-                $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
-                if ($stockDisponible <= 0) continue;
+                $collectes = $this->collecteRepo
+                    ->getCollectesDisponiblesParBesoin($besoinId);
 
-                $quantiteADistribuer = min($resteADistribuer, $stockDisponible);
+                foreach ($collectes as $collecte) {
 
-                if ($quantiteADistribuer > 0) {
-                    $stockParBesoin[$besoinId] -= $quantiteADistribuer;
+                    if ($reste <= 0) break;
+
+                    $stockDisponible = (int)$collecte['stock_disponible'];
+
+                    if ($stockDisponible <= 0) continue;
+
+                    $aDistribuer = min($reste, $stockDisponible);
 
                     $resultat['distributions'][] = [
                         'ville_id' => $villeId,
-                        'ville_nom' => $villeNom,
+                        'ville_nom' => $ville['v_nom'],
                         'besoin_id' => $besoinId,
                         'besoin_libelle' => $besoin['besoin_libelle'],
-                        'unite' => $besoin['unite'],
-                        'quantite_demandee' => $quantiteDemandee,
-                        'deja_distribue' => $quantiteDistribuee,
-                        'quantite_distribuee' => $quantiteADistribuer,
-                        'reste_apres' => $resteADistribuer - $quantiteADistribuer
+                        'quantite' => $aDistribuer,
+                        'collecte_id' => $collecte['cd_id'],
+                        'collecte_date' => $collecte['c_date']
                     ];
 
-                    $resultat['total_distribue'] += $quantiteADistribuer;
-                    if ($resteADistribuer - $quantiteADistribuer == 0) {
-                        $resultat['besoins_satisfaits']++;
-                    }
+                    $reste -= $aDistribuer;
+                    $resultat['total_distribue'] += $aDistribuer;
                 }
             }
-            $resultat['villes_traitees']++;
         }
 
         return $resultat;
     }
+
 
     /**
      * Grouper les résultats de simulation par ville pour l'affichage
