@@ -30,57 +30,66 @@ class AchatsController {
     }
 
     /**
-     * Traitement du bouton "Recouvrir" : insère une collecte avec le besoin acheté
-     * et enregistre une entrée négative sur le besoin 'Ariary' (b_id = 1) pour diminuer la trésorerie.
+     * Enregistrer tous les achats du panier en une seule fois.
+     * Reçoit un JSON avec la liste des besoins à recouvrir.
      */
-    public function recouvrir() {
+    public function enregistrer() {
         $data = Flight::request()->data;
-        $villeId = (int)($data->ville ?? 0);
-        $besoinId = (int)($data->besoin ?? 0);
-        $quantite = floatval($data->quantite ?? 0);
-        $percent = $data->percent ?? null;
+        $panierJson = $data->panier ?? '[]';
+        $percent = floatval($data->percent ?? 0);
 
-        if ($villeId <= 0 || $besoinId <= 0 || $quantite <= 0) {
+        $items = json_decode($panierJson, true);
+        if (!is_array($items) || empty($items)) {
             Flight::redirect('/achats?error=1');
             return;
         }
 
-        // validate percent server-side: must be numeric and between 0 and 100
-        if (!is_numeric($percent)) {
-            Flight::redirect('/achats?error=3');
-            return;
-        }
-        $percent = floatval($percent);
         if ($percent < 0 || $percent > 100) {
             Flight::redirect('/achats?error=4');
             return;
         }
 
-        // récupérer le prix unitaire du besoin
         $db = Flight::db();
-        $stmt = $db->prepare('SELECT b_prixUnitraire FROM bngrc_besoin WHERE b_id = ?');
-        $stmt->execute([$besoinId]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        $prixUnitaire = $row ? floatval($row['b_prixUnitraire']) : 0.0;
-
-        $prixSansPourcent = $quantite * $prixUnitaire;
-        $prixAvecPourcent = $prixSansPourcent * (1 + ($percent / 100.0));
-
-        // Vérifier côté serveur si fonds suffisants (catégorie "Argent" = 1)
         $totalArgent = $this->besoinRepo->getTotalCollecteParCategorie(1);
-        if ($prixAvecPourcent > $totalArgent) {
+
+        // Calculer le coût total
+        $coutTotal = 0;
+        $detailsCollecte = [];
+
+        foreach ($items as $item) {
+            $villeId = (int)($item['ville'] ?? 0);
+            $besoinId = (int)($item['besoin'] ?? 0);
+            $quantite = floatval($item['quantite'] ?? 0);
+
+            if ($villeId <= 0 || $besoinId <= 0 || $quantite <= 0) continue;
+
+            // Récupérer le prix unitaire
+            $stmt = $db->prepare('SELECT b_prixUnitraire FROM bngrc_besoin WHERE b_id = ?');
+            $stmt->execute([$besoinId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $prixUnitaire = $row ? floatval($row['b_prixUnitraire']) : 0.0;
+
+            $prixAvec = $quantite * $prixUnitaire * (1 + ($percent / 100.0));
+            $coutTotal += $prixAvec;
+
+            // Ajouter le besoin acheté (quantité positive)
+            $detailsCollecte[] = ['cd_besoin' => $besoinId, 'cd_quantite' => $quantite];
+            // Retrait sur Ariary (négatif)
+            $detailsCollecte[] = ['cd_besoin' => 1, 'cd_quantite' => -round($prixAvec, 2)];
+        }
+
+        if ($coutTotal > $totalArgent) {
             Flight::redirect('/achats?error=5');
             return;
         }
 
-        // Préparer détails: d'abord le besoin acheté (quantité positive), puis retrait sur Ariary (b_id = 1) en négatif
-        $details = [
-            [ 'cd_besoin' => $besoinId, 'cd_quantite' => $quantite ],
-            [ 'cd_besoin' => 1, 'cd_quantite' => -round($prixAvecPourcent, 2) ]
-        ];
+        if (empty($detailsCollecte)) {
+            Flight::redirect('/achats?error=1');
+            return;
+        }
 
         try {
-            $this->collecteRepo->insererCollecte(date('Y-m-d'), $details);
+            $this->collecteRepo->insererCollecte(date('Y-m-d'), $detailsCollecte);
             Flight::redirect('/achats?success=1');
         } catch (\Exception $e) {
             Flight::redirect('/achats?error=2');

@@ -108,12 +108,17 @@
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
                     <strong>Aperçu de la simulation</strong> — Ces données ne sont pas encore enregistrées. Cliquez sur <strong>Valider</strong> pour enregistrer.
                 </div>
-                <form action="/simulation/valider" method="POST" class="d-inline ms-3">
-                    <input type="hidden" name="type_simulation" value="<?= $type_simulation ?? 1 ?>">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-lg me-1"></i>Valider et enregistrer
-                    </button>
-                </form>
+                <div class="d-flex gap-2 ms-3">
+                    <a href="/simulation" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser
+                    </a>
+                    <form action="/simulation/valider" method="POST" class="d-inline">
+                        <input type="hidden" name="type_simulation" value="<?= $type_simulation ?? 1 ?>">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-1"></i>Valider et enregistrer
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 

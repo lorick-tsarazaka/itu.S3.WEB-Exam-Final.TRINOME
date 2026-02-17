@@ -97,9 +97,9 @@ $router->group('', function(Router $router) use ($app) {
         $controller->index();
     });
 
-    $router->post('/achats/recouvrir', function() use ($app) {
+    $router->post('/achats/enregistrer', function() use ($app) {
         $controller = new AchatsController($app);
-        $controller->recouvrir();
+        $controller->enregistrer();
     });
 
     // Récapitulation
