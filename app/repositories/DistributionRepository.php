@@ -164,18 +164,28 @@ class DistributionRepository {
     /**
      * Insérer un détail de distribution (utilisé par la simulation)
      */
-    public function insererDistributionDetail(int $distributionId, int $besoinId, int $quantite, int $villeId): int {
-        $sql = "INSERT INTO bngrc_distributionDetails (dd_distribution, dd_besoin, dd_quantite, dd_ville) 
-                VALUES (:distribution_id, :besoin_id, :quantite, :ville_id)";
-        
+    public function insererDistributionDetail(
+        int $distributionId,
+        int $besoinId,
+        int $quantite,
+        int $villeId,
+        int $collecteDetailId
+    ): int {
+
+        $sql = "INSERT INTO bngrc_distributionDetails 
+                (dd_distribution, dd_besoin, dd_quantite, dd_ville, dd_collecteDetails)
+                VALUES 
+                (:distribution_id, :besoin_id, :quantite, :ville_id, :collecte_id)";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             ':distribution_id' => $distributionId,
             ':besoin_id' => $besoinId,
             ':quantite' => $quantite,
-            ':ville_id' => $villeId
+            ':ville_id' => $villeId,
+            ':collecte_id' => $collecteDetailId
         ]);
-        
+
         return (int)$this->pdo->lastInsertId();
     }
 
