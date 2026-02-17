@@ -115,7 +115,9 @@ create table bngrc_distributionDetails (
   dd_besoin int not null,
   dd_quantite int not null,
   dd_ville int not null,
+  dd_collecteDetails int not null,
   foreign key (dd_distribution) references bngrc_distribution(d_id),
   foreign key (dd_besoin) references bngrc_besoin(b_id),
-  foreign key (dd_ville) references bngrc_ville(v_id)
+  foreign key (dd_ville) references bngrc_ville(v_id),
+  foreign key (dd_collecteDetails) references bngrc_collecteDetails(cd_id)
 );
