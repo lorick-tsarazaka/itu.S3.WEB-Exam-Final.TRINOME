@@ -1,0 +1,5 @@
+#GITHUB
+https://github.com/lorick-tsarazaka/itu.S3.WEB-Exam-Final.TRINOME.git
+
+#TODO
+https://docs.google.com/spreadsheets/d/102EJEcVFi3UhFa3FBJ8Alvwe8hm5l_KFGaJov0Io4wU/edit?gid=0#gid=0
