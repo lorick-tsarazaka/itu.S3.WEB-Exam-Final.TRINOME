@@ -200,6 +200,7 @@ class DistributionRepository {
                     b.b_libelle AS besoin_libelle,
                     ub.ub_libelle AS unite,
                     bv.bv_quantite AS quantite_demandee,
+                    bv.bv_date_demande AS date_demande,
                     COALESCE(SUM(dd.dd_quantite), 0) AS quantite_distribuee,
                     (bv.bv_quantite - COALESCE(SUM(dd.dd_quantite), 0)) AS reste
                 FROM bngrc_besoinVille bv
@@ -207,7 +208,7 @@ class DistributionRepository {
                 JOIN bngrc_besoin b ON bv.bv_besoin = b.b_id
                 JOIN bngrc_uniteBesoin ub ON b.b_unite = ub.ub_id
                 LEFT JOIN bngrc_distributionDetails dd ON dd.dd_besoin = bv.bv_besoin AND dd.dd_ville = bv.bv_ville
-                GROUP BY v.v_id, v.v_nom, b.b_id, b.b_libelle, ub.ub_libelle, bv.bv_quantite
+                GROUP BY v.v_id, v.v_nom, b.b_id, b.b_libelle, ub.ub_libelle, bv.bv_quantite, bv.bv_date_demande
                 ORDER BY v.v_nom, b.b_libelle";
         
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);

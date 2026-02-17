@@ -291,6 +291,7 @@ class SimulationDonService {
 
             $parVille[$villeId]['besoins'][] = [
                 'besoin_id' => $row['besoin_id'],
+                'date_demande' => $row['date_demande'] ?? null,
                 'besoin_libelle' => $row['besoin_libelle'],
                 'unite' => $row['unite'],
                 'quantite_demandee' => (int)$row['quantite_demandee'],

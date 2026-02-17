@@ -40,17 +40,14 @@ class BesoinController
     public function save()
     {
         $data = $_POST['besoins'] ?? [];
-        // group by ville, include optional date_demande per row
+        // group by ville
         $byVille = [];
         foreach ($data as $row) {
             $ville = (int)($row['ville'] ?? 0);
             $besoin = (int)($row['besoin'] ?? 0);
             $quantite = (int)($row['quantite'] ?? 0);
-            $date = isset($row['date']) && $row['date'] !== '' ? $row['date'] : null;
             if ($ville <= 0 || $besoin <= 0) continue;
-            $item = ['besoin' => $besoin, 'quantite' => $quantite];
-            if ($date !== null) $item['date'] = $date;
-            $byVille[$ville][] = $item;
+            $byVille[$ville][] = ['besoin' => $besoin, 'quantite' => $quantite];
         }
 
         $results = [];
