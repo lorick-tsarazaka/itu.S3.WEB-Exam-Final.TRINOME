@@ -108,6 +108,11 @@
                         <input type="number" name="besoins[0][quantite]" class="form-control" min="0" value="1" required>
                     </div>
 
+                    <div class="col-md-2">
+                        <label class="form-label">Date demande</label>
+                        <input type="date" name="besoins[0][date]" class="form-control" value="<?= date('Y-m-d') ?>">
+                    </div>
+
                     <div class="col-md-1">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Retirer">
                             &times;
@@ -173,6 +178,11 @@
         <div class="col-md-2">
             <label class="form-label">Quantité</label>
             <input type="number" name="besoins[__INDEX__][quantite]" class="form-control" min="0" value="1" required>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Date demande</label>
+            <input type="date" name="besoins[__INDEX__][date]" class="form-control" value="<?= date('Y-m-d') ?>">
         </div>
 
         <div class="col-md-1">

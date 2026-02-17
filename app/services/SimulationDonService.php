@@ -48,7 +48,8 @@ class SimulationDonService {
             $villeId = (int)$ville['v_id'];
             $villeNom = $ville['v_nom'];
 
-            $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVille($villeId);
+                // Prioriser par date de demande (anciennes d'abord)
+                $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVilleOrdreDate($villeId);
 
             foreach ($besoinsNonSatisfaits as $besoin) {
                 $besoinId = (int)$besoin['besoin_id'];
@@ -70,6 +71,7 @@ class SimulationDonService {
                         'ville_id' => $villeId,
                         'ville_nom' => $villeNom,
                         'besoin_id' => $besoinId,
+                            'date_demande' => $besoin['date_demande'] ?? null,
                         'besoin_libelle' => $besoin['besoin_libelle'],
                         'unite' => $besoin['unite'],
                         'quantite_demandee' => $quantiteDemandee,
@@ -109,6 +111,7 @@ class SimulationDonService {
             }
             $parVille[$villeId]['besoins'][] = [
                 'besoin_id' => $dist['besoin_id'],
+                'date_demande' => $dist['date_demande'] ?? null,
                 'besoin_libelle' => $dist['besoin_libelle'],
                 'unite' => $dist['unite'],
                 'quantite_demandee' => $dist['quantite_demandee'],
@@ -138,7 +141,7 @@ class SimulationDonService {
         try {
             $this->pdo->beginTransaction();
 
-            // Créer une nouvelle distribution pour cette simulation
+            // Créer une nouvelle distribution pour cette simulation (utilise la méthode générique du repo)
             $distributionId = $this->distributionRepo->creerDistribution($date);
 
             // Récupérer toutes les villes
@@ -151,8 +154,8 @@ class SimulationDonService {
                 $villeId = (int)$ville['v_id'];
                 $villeNom = $ville['v_nom'];
 
-                // Récupérer les besoins non satisfaits de cette ville
-                $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVille($villeId);
+                // Récupérer les besoins non satisfaits de cette ville (priorisé par date_demande)
+                $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVilleOrdreDate($villeId);
 
                 foreach ($besoinsNonSatisfaits as $besoin) {
                     $besoinId = (int)$besoin['besoin_id'];
@@ -177,13 +180,8 @@ class SimulationDonService {
                     $quantiteADistribuer = min($resteADistribuer, $stockDisponible);
 
                     if ($quantiteADistribuer > 0) {
-                        // Insérer le détail de distribution
-                        $this->distributionRepo->insererDistributionDetail(
-                            $distributionId,
-                            $besoinId,
-                            $quantiteADistribuer,
-                            $villeId
-                        );
+                        // Insérer le détail de distribution via le repository
+                        $this->distributionRepo->insererDistributionDetail($distributionId, $besoinId, $quantiteADistribuer, $villeId);
 
                         // Mettre à jour le stock disponible
                         $stockParBesoin[$besoinId] -= $quantiteADistribuer;
@@ -193,6 +191,7 @@ class SimulationDonService {
                             'ville_id' => $villeId,
                             'ville_nom' => $villeNom,
                             'besoin_id' => $besoinId,
+                            'date_demande' => $besoin['date_demande'] ?? null,
                             'besoin_libelle' => $besoinLibelle,
                             'unite' => $unite,
                             'quantite_demandee' => $quantiteDemandee,
@@ -258,6 +257,16 @@ class SimulationDonService {
      */
     public function getResumeDistributionsParVille(): array {
         return $this->distributionRepo->getResumeDistributionsParVille();
+    }
+
+    /**
+     * Insérer une distribution simulée (wrapper)
+     * @param string $date
+     * @param array $details each item: ['dd_besoin'=>int, 'dd_quantite'=>int, 'dd_ville'=>int]
+     * @return int distribution id
+     */
+    public function insererDistributionSimulee(string $date, array $details): int {
+        return $this->distributionRepo->insererDistribution($date, $details);
     }
 
     /**

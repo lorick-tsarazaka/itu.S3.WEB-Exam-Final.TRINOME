@@ -30,7 +30,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 <?= ($pageTitle ?? '') === 'Liste des Collectes' || ($pageTitle ?? '') === 'Nouvelle Collecte' ? 'active' : '' ?>" href="<?= $base ?>/collecte">
-                            <i class="bi bi-collection me-1"></i> Collectes
+                            <i class="bi bi-collection me-1"></i> Dons
                         </a>
                     </li>
                     <li class="nav-item">
