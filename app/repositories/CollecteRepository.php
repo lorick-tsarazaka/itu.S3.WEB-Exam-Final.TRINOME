@@ -52,27 +52,29 @@ class CollecteRepository {
      * Stock disponible = quantite_collecte - déjà_distribué
      */
     public function getCollectesDisponiblesParBesoin(int $besoinId): array {
-        $sql = "SELECT 
-                    cd.cd_id,
-                    cd.cd_collecte,
-                    cd.cd_besoin,
-                    cd.cd_quantite AS quantite_collectee,
-                    c.c_date,
-                    b.b_libelle AS besoin_libelle,
-                    COALESCE(
-                        (SELECT SUM(dd.dd_quantite) 
-                         FROM bngrc_distributionDetails dd 
-                         WHERE dd.dd_besoin = cd.cd_besoin), 0
-                    ) AS total_distribue_global,
-                    cd.cd_quantite AS stock_initial
-                FROM bngrc_collecteDetails cd
-                JOIN bngrc_collecte c ON cd.cd_collecte = c.c_id
-                JOIN bngrc_besoin b ON cd.cd_besoin = b.b_id
-                WHERE cd.cd_besoin = :besoin_id
-                ORDER BY c.c_date ASC, cd.cd_id ASC";
-        
+
+        $sql = "
+            SELECT 
+                cd.cd_id,
+                cd.cd_collecte,
+                cd.cd_besoin,
+                cd.cd_quantite AS quantite_collectee,
+                c.c_date,
+                COALESCE(SUM(dd.dd_quantite), 0) AS quantite_deja_distribuee,
+                (cd.cd_quantite - COALESCE(SUM(dd.dd_quantite), 0)) AS stock_disponible
+            FROM bngrc_collecteDetails cd
+            JOIN bngrc_collecte c ON cd.cd_collecte = c.c_id
+            LEFT JOIN bngrc_distributionDetails dd 
+                ON dd.dd_collecteDetails = cd.cd_id
+            WHERE cd.cd_besoin = :besoin_id
+            GROUP BY cd.cd_id, cd.cd_collecte, cd.cd_besoin, cd.cd_quantite, c.c_date
+            HAVING stock_disponible > 0
+            ORDER BY c.c_date ASC, cd.cd_id ASC
+        ";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':besoin_id' => $besoinId]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
