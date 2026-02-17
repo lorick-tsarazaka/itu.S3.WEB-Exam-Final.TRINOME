@@ -5,9 +5,9 @@ use final_exam_s3;
  drop TABLE IF EXISTS bngrc_regionVille;
  drop TABLE IF EXISTS bngrc_besoinVille;
  drop TABLE IF EXISTS bngrc_sinistre;
+ drop TABLE IF EXISTS bngrc_besoin;
  drop TABLE IF EXISTS bngrc_categorieBesoin;
  drop TABLE IF EXISTS bngrc_uniteBesoin;
- drop TABLE IF EXISTS bngrc_besoin;
  drop TABLE IF EXISTS bngrc_statusBesoinVille;
  drop TABLE IF EXISTS bngrc_collecteDetails;
  drop TABLE IF EXISTS bngrc_collecte;
@@ -122,3 +122,6 @@ create table bngrc_distributionDetails (
   foreign key (dd_ville) references bngrc_ville(v_id),
   foreign key (dd_collecteDetails) references bngrc_collecteDetails(cd_id)
 );
+
+
+ALTER TABLE bngrc_distributionDetails MODIFY dd_collecteDetails INT NULL;
