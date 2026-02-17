@@ -126,100 +126,294 @@ class SimulationDonService {
     }
 
     /**
-     * Simuler le dispatch de dons et ENREGISTRER en base (appelé après validation)
+     * Valider et enregistrer en base : utilise simulerSansEnregistrer() 
+     * pour garantir que seules les distributions de l'aperçu sont insérées.
      */
-    public function simulerDispatch(?string $date = null): array {
+    public function simulerDispatch(?string $date = null, int $typeSimulation = 1): array {
         $date = $date ?? date('Y-m-d');
-        $resultat = [
-            'date' => $date,
-            'distributions' => [],
-            'total_distribue' => 0,
-            'villes_traitees' => 0,
-            'besoins_satisfaits' => 0
-        ];
+
+        // Récupérer exactement le même résultat que l'aperçu selon le type
+        switch ($typeSimulation) {
+            case 2:
+                $apercu = $this->simulerParOrdreQuantite();
+                break;
+            case 3:
+                $apercu = $this->simulerProportionnel();
+                break;
+            default:
+                $apercu = $this->simulerSansEnregistrer();
+                break;
+        }
+
+        if (empty($apercu['distributions'])) {
+            return [
+                'date' => $date,
+                'distributions' => [],
+                'total_distribue' => 0,
+                'villes_traitees' => 0,
+                'besoins_satisfaits' => 0,
+                'success' => true
+            ];
+        }
 
         try {
             $this->pdo->beginTransaction();
 
-            // Créer une nouvelle distribution pour cette simulation (utilise la méthode générique du repo)
+            // Créer une nouvelle distribution
             $distributionId = $this->distributionRepo->creerDistribution($date);
 
-            // Récupérer toutes les villes
-            $villes = $this->villeRepo->findAll();
+            // Insérer UNIQUEMENT les distributions calculées par l'aperçu
+            foreach ($apercu['distributions'] as $dist) {
+                $this->distributionRepo->insererDistributionDetail(
+                    $distributionId,
+                    (int)$dist['besoin_id'],
+                    (int)$dist['quantite_distribuee'],
+                    (int)$dist['ville_id']
+                );
+            }
 
-            // Calculer le stock disponible par besoin (total collecté - total distribué)
-            $stockParBesoin = $this->calculerStockDisponible();
+            $this->pdo->commit();
 
-            foreach ($villes as $ville) {
-                $villeId = (int)$ville['v_id'];
-                $villeNom = $ville['v_nom'];
+            $apercu['distribution_id'] = $distributionId;
+            $apercu['date'] = $date;
+            $apercu['success'] = true;
 
-                // Récupérer les besoins non satisfaits de cette ville (priorisé par date_demande)
-                $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVilleOrdreDate($villeId);
+            return $apercu;
 
-                foreach ($besoinsNonSatisfaits as $besoin) {
-                    $besoinId = (int)$besoin['besoin_id'];
-                    $besoinLibelle = $besoin['besoin_libelle'];
-                    $unite = $besoin['unite'];
-                    $quantiteDemandee = (int)$besoin['quantite_demandee'];
-                    $quantiteDistribuee = (int)$besoin['quantite_distribuee'];
-                    $resteADistribuer = $quantiteDemandee - $quantiteDistribuee;
+        } catch (\Exception $e) {
+            $this->pdo->rollBack();
+            return [
+                'date' => $date,
+                'distributions' => [],
+                'total_distribue' => 0,
+                'villes_traitees' => 0,
+                'besoins_satisfaits' => 0,
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 
-                    if ($resteADistribuer <= 0) {
+    /**
+     * Simulation de distribution par ordre de quantité (du plus petit au plus grand)
+     * Formule : quantite_distribuee = (reste_besoin_individuel / total_reste_global) * stock_disponible
+     * 1. Récupérer la liste des villes
+     * 2. Récupérer les besoins (group by besoin) d'une ville
+     * 3. Récupérer la liste des besoins par ville et par besoin ordonnés par quantité (plus petit d'abord)
+     * 4. Simuler la distribution sans sauvegarder en considérant les besoins déjà distribués
+     */
+    public function simulerParOrdreQuantite(): array {
+        $resultat = [
+            'date' => date('Y-m-d'),
+            'distributions' => [],
+            'total_distribue' => 0,
+            'villes_traitees' => 0,
+            'besoins_satisfaits' => 0,
+            'success' => true
+        ];
+
+        // 1. Récupérer la liste des villes
+        $villes = $this->villeRepo->findAll();
+        $stockParBesoin = $this->calculerStockDisponible();
+
+        foreach ($villes as $ville) {
+            $villeId = (int)$ville['v_id'];
+            $villeNom = $ville['v_nom'];
+
+            // 2. Récupérer les besoins groupés par besoin pour cette ville
+            $besoinsGroupes = $this->besoinRepo->findBesoinsParVilleGroupByBesoin($villeId);
+
+            foreach ($besoinsGroupes as $besoinGroupe) {
+                $besoinId = (int)$besoinGroupe['besoin_id'];
+                $totalDemande = (int)$besoinGroupe['quantite_demandee'];
+                $totalDistribue = (int)$besoinGroupe['quantite_distribuee'];
+                $resteGlobal = $totalDemande - $totalDistribue;
+
+                if ($resteGlobal <= 0) continue;
+
+                $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
+                if ($stockDisponible <= 0) continue;
+
+                // 3. Récupérer la liste des besoins par ville et par besoin ordonnés par quantité (plus petit d'abord)
+                $besoinsIndividuels = $this->besoinRepo->findBesoinsParVilleEtBesoinOrdreQuantite($villeId, $besoinId);
+
+                // Calculer le reste de chaque entrée individuelle en soustrayant le déjà distribué
+                $dejaDistribueRestant = $totalDistribue;
+                $entreesAvecReste = [];
+
+                foreach ($besoinsIndividuels as $besoinIndiv) {
+                    $quantiteEntree = (int)$besoinIndiv['quantite_demandee'];
+
+                    // Soustraire le déjà distribué des entrées les plus petites d'abord
+                    if ($dejaDistribueRestant >= $quantiteEntree) {
+                        $dejaDistribueRestant -= $quantiteEntree;
                         continue;
                     }
 
-                    // Vérifier le stock disponible pour ce besoin
-                    $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
+                    $resteEntree = $quantiteEntree - $dejaDistribueRestant;
+                    $dejaDistribueRestant = 0;
 
-                    if ($stockDisponible <= 0) {
-                        continue;
+                    if ($resteEntree > 0) {
+                        $besoinIndiv['reste_entree'] = $resteEntree;
+                        $entreesAvecReste[] = $besoinIndiv;
+                    }
+                }
+
+                if (empty($entreesAvecReste)) continue;
+
+                // Calculer le total des restes pour la formule proportionnelle
+                $totalRestes = array_sum(array_column($entreesAvecReste, 'reste_entree'));
+
+                // Distribuer proportionnellement : qte_distribuee = (reste_entree / totalRestes) * stock
+                $stockADistribuer = min($stockDisponible, $totalRestes);
+                $totalDistribueCeBesoin = 0;
+
+                foreach ($entreesAvecReste as $i => $entree) {
+                    $resteEntree = (int)$entree['reste_entree'];
+                    $quantiteEntree = (int)$entree['quantite_demandee'];
+
+                    // Formule : quantite_distribuee = (reste_entree / totalRestes) * stock_disponible
+                    if ($i === count($entreesAvecReste) - 1) {
+                        // Dernière entrée : donner le reste pour éviter les erreurs d'arrondi
+                        $quantiteADistribuer = $stockADistribuer - $totalDistribueCeBesoin;
+                    } else {
+                        $quantiteADistribuer = (int)floor(($resteEntree / $totalRestes) * $stockADistribuer);
                     }
 
-                    // Calculer la quantité à distribuer (min entre reste et stock)
-                    $quantiteADistribuer = min($resteADistribuer, $stockDisponible);
+                    $quantiteADistribuer = max(0, min($quantiteADistribuer, $resteEntree));
 
                     if ($quantiteADistribuer > 0) {
-                        // Insérer le détail de distribution via le repository
-                        $this->distributionRepo->insererDistributionDetail($distributionId, $besoinId, $quantiteADistribuer, $villeId);
+                        $totalDistribueCeBesoin += $quantiteADistribuer;
 
-                        // Mettre à jour le stock disponible
-                        $stockParBesoin[$besoinId] -= $quantiteADistribuer;
-
-                        // Enregistrer dans le résultat
                         $resultat['distributions'][] = [
                             'ville_id' => $villeId,
                             'ville_nom' => $villeNom,
                             'besoin_id' => $besoinId,
-                            'date_demande' => $besoin['date_demande'] ?? null,
-                            'besoin_libelle' => $besoinLibelle,
-                            'unite' => $unite,
-                            'quantite_demandee' => $quantiteDemandee,
-                            'deja_distribue' => $quantiteDistribuee,
+                            'bv_id' => $entree['bv_id'],
+                            'date_demande' => $entree['date_demande'] ?? null,
+                            'besoin_libelle' => $entree['besoin_libelle'],
+                            'unite' => $entree['unite'],
+                            'quantite_demandee' => $quantiteEntree,
+                            'deja_distribue' => $quantiteEntree - $resteEntree,
                             'quantite_distribuee' => $quantiteADistribuer,
-                            'reste_apres' => $resteADistribuer - $quantiteADistribuer
+                            'reste_apres' => $resteEntree - $quantiteADistribuer
                         ];
 
                         $resultat['total_distribue'] += $quantiteADistribuer;
-
-                        if ($resteADistribuer - $quantiteADistribuer == 0) {
+                        if ($resteEntree - $quantiteADistribuer == 0) {
                             $resultat['besoins_satisfaits']++;
                         }
                     }
                 }
 
-                $resultat['villes_traitees']++;
+                $stockParBesoin[$besoinId] -= $totalDistribueCeBesoin;
             }
 
-            $this->pdo->commit();
-            $resultat['distribution_id'] = $distributionId;
-            $resultat['success'] = true;
-
-        } catch (\Exception $e) {
-            $this->pdo->rollBack();
-            $resultat['success'] = false;
-            $resultat['error'] = $e->getMessage();
+            $resultat['villes_traitees']++;
         }
+
+        return $resultat;
+    }
+
+    /**
+     * Simulation de distribution proportionnelle
+     * Chaque besoinVille reçoit une part proportionnelle à sa demande restante
+     * Formule : quantite_distribuee = (reste_besoin / total_restes_du_meme_type) * stock_disponible
+     */
+    public function simulerProportionnel(): array {
+        $resultat = [
+            'date' => date('Y-m-d'),
+            'distributions' => [],
+            'total_distribue' => 0,
+            'villes_traitees' => 0,
+            'besoins_satisfaits' => 0,
+            'success' => true
+        ];
+
+        $stockParBesoin = $this->calculerStockDisponible();
+
+        // Récupérer tous les besoins non satisfaits de toutes les villes, groupés par type de besoin
+        $villes = $this->villeRepo->findAll();
+
+        // Collecter tous les besoins non satisfaits par type de besoin (toutes villes confondues)
+        $besoinsParType = [];
+        foreach ($villes as $ville) {
+            $villeId = (int)$ville['v_id'];
+            $villeNom = $ville['v_nom'];
+            $besoinsNonSatisfaits = $this->besoinRepo->findBesoinsNonSatisfaitsParVille($villeId);
+
+            foreach ($besoinsNonSatisfaits as $besoin) {
+                $besoinId = (int)$besoin['besoin_id'];
+                $reste = (int)$besoin['quantite_demandee'] - (int)$besoin['quantite_distribuee'];
+                if ($reste <= 0) continue;
+
+                $besoinsParType[$besoinId][] = [
+                    'ville_id' => $villeId,
+                    'ville_nom' => $villeNom,
+                    'besoin_id' => $besoinId,
+                    'bv_id' => $besoin['bv_id'],
+                    'date_demande' => $besoin['date_demande'] ?? null,
+                    'besoin_libelle' => $besoin['besoin_libelle'],
+                    'unite' => $besoin['unite'],
+                    'quantite_demandee' => (int)$besoin['quantite_demandee'],
+                    'quantite_distribuee' => (int)$besoin['quantite_distribuee'],
+                    'reste' => $reste
+                ];
+            }
+        }
+
+        $villesTraitees = [];
+
+        // Pour chaque type de besoin, distribuer proportionnellement le stock
+        foreach ($besoinsParType as $besoinId => $besoins) {
+            $stockDisponible = $stockParBesoin[$besoinId] ?? 0;
+            if ($stockDisponible <= 0) continue;
+
+            $totalRestes = array_sum(array_column($besoins, 'reste'));
+            if ($totalRestes <= 0) continue;
+
+            $stockADistribuer = min($stockDisponible, $totalRestes);
+            $totalDistribueCeType = 0;
+
+            foreach ($besoins as $i => $besoin) {
+                $villesTraitees[$besoin['ville_id']] = true;
+
+                // Dernière entrée : donner le reste pour éviter erreurs d'arrondi
+                if ($i === count($besoins) - 1) {
+                    $quantiteADistribuer = $stockADistribuer - $totalDistribueCeType;
+                } else {
+                    $quantiteADistribuer = (int)floor(($besoin['reste'] / $totalRestes) * $stockADistribuer);
+                }
+
+                $quantiteADistribuer = max(0, min($quantiteADistribuer, $besoin['reste']));
+
+                if ($quantiteADistribuer > 0) {
+                    $totalDistribueCeType += $quantiteADistribuer;
+
+                    $resultat['distributions'][] = [
+                        'ville_id' => $besoin['ville_id'],
+                        'ville_nom' => $besoin['ville_nom'],
+                        'besoin_id' => $besoinId,
+                        'date_demande' => $besoin['date_demande'],
+                        'besoin_libelle' => $besoin['besoin_libelle'],
+                        'unite' => $besoin['unite'],
+                        'quantite_demandee' => $besoin['quantite_demandee'],
+                        'deja_distribue' => $besoin['quantite_distribuee'],
+                        'quantite_distribuee' => $quantiteADistribuer,
+                        'reste_apres' => $besoin['reste'] - $quantiteADistribuer
+                    ];
+
+                    $resultat['total_distribue'] += $quantiteADistribuer;
+                    if ($besoin['reste'] - $quantiteADistribuer == 0) {
+                        $resultat['besoins_satisfaits']++;
+                    }
+                }
+            }
+
+            $stockParBesoin[$besoinId] -= $totalDistribueCeType;
+        }
+
+        $resultat['villes_traitees'] = count($villesTraitees);
 
         return $resultat;
     }
@@ -291,6 +485,7 @@ class SimulationDonService {
 
             $parVille[$villeId]['besoins'][] = [
                 'besoin_id' => $row['besoin_id'],
+                'date_demande' => $row['date_demande'] ?? null,
                 'besoin_libelle' => $row['besoin_libelle'],
                 'unite' => $row['unite'],
                 'quantite_demandee' => (int)$row['quantite_demandee'],
