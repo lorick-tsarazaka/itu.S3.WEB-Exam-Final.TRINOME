@@ -48,7 +48,7 @@
 
         <!-- Résumé -->
         <div class="d-flex gap-2 flex-wrap flex-md-nowrap mb-4 align-items-stretch">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="stat-card stat-card-primary">
                     <div class="stat-card-body">
                         <div class="stat-icon"><i class="bi bi-collection-fill"></i></div>
@@ -59,24 +59,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="stat-card stat-card-success">
                     <div class="stat-card-body">
                         <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
                         <div class="stat-info">
                             <h3 class="stat-number"><?php $tp = 0; foreach($collectes as $c) $tp += (int)$c['nb_details']; echo $tp; ?></h3>
                             <p class="stat-label">Produits collectés</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card stat-card-info">
-                    <div class="stat-card-body">
-                        <div class="stat-icon"><i class="bi bi-123"></i></div>
-                        <div class="stat-info">
-                            <h3 class="stat-number"><?php $tq = 0; foreach($collectes as $c) $tq += (int)$c['total_quantite']; echo $tq; ?></h3>
-                            <p class="stat-label">Quantité totale</p>
                         </div>
                     </div>
                 </div>
